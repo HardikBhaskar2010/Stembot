@@ -22,7 +22,8 @@
     "cap:sync": "npm run build && cap sync",
     "cap:android": "npm run build && cap sync android && cap open android",
     "cap:ios": "npm run build && cap sync ios && cap open ios",
-    "icons:native": "capacitor-assets generate --android --ios --iconBackgroundColor \"#1A120E\" --iconBackgroundColorDark \"#1A120E\" --splashBackgroundColor \"#1A120E\" --splashBackgroundColorDark \"#1A120E\""
+    "icons:native": "capacitor-assets generate --android --ios --iconBackgroundColor \"#1A120E\" --iconBackgroundColorDark \"#1A120E\" --splashBackgroundColor \"#1A120E\" --splashBackgroundColorDark \"#1A120E\"",
+    "check:firmware": "node scripts/check-firmware.mjs"
   },
   "dependencies": {
     "@capacitor-community/bluetooth-le": "8.4.0",

@@ -36,6 +36,9 @@ jobs:
           npm run lint
           npm test
 
+      - name: Type-check the micro:bit firmware against MakeCode's APIs
+        run: npm run check:firmware
+
       - name: Build web app (includes typecheck)
         run: npm run build
 

@@ -12,3 +12,5 @@ public
 *.md
 # MakeCode firmware: keep its own style
 stembot_fw_*.ts
+# Vendored MakeCode declarations
+firmware-check/makecode

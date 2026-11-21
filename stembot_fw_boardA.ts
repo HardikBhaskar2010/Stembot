@@ -36,12 +36,12 @@ pins.digitalWritePin(DigitalPin.P15, 0)
 pins.digitalWritePin(DigitalPin.P16, 0)
 
 // ---- per-board settings -------------------------------------------------
-const FLIP = false               // true = reverse both wheels (wheels wired the other way)
-const HAS_ULTRASONIC = 1       // 1 if this car has a working ultrasonic sensor, else 0
-const USE_SOUND = 1                 // 1 = car sounds and honk; 0 = silent (if panic 070 persists)
-const USE_MIC = 0                   // 1 = clap commands (microphone); 0 = microphone never started
-const HAS_HORN = USE_SOUND          // honk needs sound
-const HAS_COMPASS = 1               // micro:bit V2 has a compass (magnetometer)
+const FLIP: boolean = false      // true = reverse both wheels (wheels wired the other way)
+const HAS_ULTRASONIC: number = 1 // 1 if this car has a working ultrasonic sensor, else 0
+const USE_SOUND: number = 1      // 1 = car sounds and honk; 0 = silent (if panic 070 persists)
+const USE_MIC: number = 0        // 1 = clap commands (microphone); 0 = microphone never started
+const HAS_HORN: number = USE_SOUND // honk needs sound
+const HAS_COMPASS: number = 1    // micro:bit V2 has a compass (magnetometer)
 const FW_VERSION = "2.3"
 // -------------------------------------------------------------------------
 
@@ -497,7 +497,7 @@ bluetooth.onUartDataReceived(serial.delimiters(Delimiters.NewLine), function () 
     } else if (c == "m") {
         soundOn = on
     } else if (c == "k") {
-        clapMode = on && USE_MIC == 1
+        clapMode = on && USE_MIC != 0
         cancelAuto()
         quietUntil = control.millis() + 400
         if (on) {

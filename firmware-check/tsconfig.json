@@ -1,0 +1,11 @@
+{
+  "compilerOptions": {
+    "noEmit": true,
+    "skipLibCheck": true,
+    "strict": false,
+    "target": "es2017",
+    "lib": ["es2017"],
+    "types": []
+  },
+  "include": ["makecode/*.d.ts"]
+}
