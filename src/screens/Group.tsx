@@ -1,7 +1,7 @@
 import { ArrowLeft, Info, SlidersHorizontal } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { goBack, navigate } from '../app/router';
-import { release } from '../control/fleet';
+import { release, setReversed } from '../control/fleet';
 import { t } from '../i18n/en';
 import { SPEED_MAX, SPEED_MIN } from '../protocol/constants';
 import { colorValue, useGarage, type SavedCar } from '../store/garage';
@@ -189,7 +189,7 @@ function TunePanel({ cars }: { cars: SavedCar[] }) {
             <Switch
               label={t('group.reverseFor', { name: c.name })}
               checked={c.reversed}
-              onChange={(v) => update(c.id, { reversed: v })}
+              onChange={(v) => setReversed(c.id, v)}
             />
           </label>
         </div>

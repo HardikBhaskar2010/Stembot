@@ -1,7 +1,7 @@
 import { ArrowLeft, Settings2 } from 'lucide-react';
 import { useEffect, useRef } from 'react';
 import { goBack, navigate } from '../app/router';
-import { connectCar } from '../control/fleet';
+import { connectCar, stepMessage } from '../control/fleet';
 import { t } from '../i18n/en';
 import { TELEMETRY_STALE_MS } from '../protocol/constants';
 import { colorValue, useGarage } from '../store/garage';
@@ -114,6 +114,11 @@ export function Drive({ carId }: { carId: string }) {
             overlay={
               <>
                 <CompassBadge car={car} live={live} now={now} />
+                {connected && live.lastStep && now - live.lastStep.at < 3000 && (
+                  <span className={`chip chip--step chip--step-${live.lastStep.why}`}>
+                    {stepMessage(car.name, live.lastStep.movedCm, live.lastStep.why)}
+                  </span>
+                )}
                 {connected && car.clapMode && (
                   <span className="chip chip--clap">
                     {live.lastClap && now - live.lastClap.at < 2500

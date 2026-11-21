@@ -5,6 +5,7 @@ export type VoiceAction =
   | { type: 'stop' }
   | { type: 'move'; dir: Direction }
   | { type: 'spin'; dir: 'left' | 'right' }
+  | { type: 'step'; dir: 'forward' | 'backward' }
   | { type: 'speed'; delta: 1 | -1 }
   | { type: 'mode'; mode: SpeedMode }
   | { type: 'honk' }
@@ -42,6 +43,10 @@ export function matchVoice(transcript: string): VoiceAction | null {
   if (/\b(slower|slow down)\b/.test(w)) return { type: 'speed', delta: -1 };
   if (/\b(slow mode|slow)\b/.test(w)) return { type: 'mode', mode: 'slow' };
   if (/\bnormal\b/.test(w)) return { type: 'mode', mode: 'normal' };
+  if (/\b(step|inch)\b/.test(w)) {
+    const back = /\b(back|backward|backwards|reverse)\b/.test(w);
+    return { type: 'step', dir: back ? 'backward' : 'forward' };
+  }
   if (/\b(spin|turn around|rotate)\b/.test(w)) {
     return { type: 'spin', dir: /\bleft\b/.test(w) ? 'left' : 'right' };
   }

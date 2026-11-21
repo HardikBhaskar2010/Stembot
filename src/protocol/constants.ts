@@ -51,6 +51,9 @@ export const OBSTACLE_MAX_CM = 100;
 /** Choices offered in the UI. 0 = off. */
 export const OBSTACLE_CHOICES = [0, 20, 30, 50] as const;
 
+/** Heading-hold step length for the quick commands (firmware v2.2, f/b). */
+export const STEP_CM = 10;
+
 /** Quick-command pulse lengths. */
 export const NUDGE_MS = 300;
 export const SPIN_MS = 450;

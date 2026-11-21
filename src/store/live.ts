@@ -23,7 +23,11 @@ export interface LiveCar {
     /** Firmware v2.1 `m` / `k` last sent (undefined = not sent on this link). */
     carSounds?: boolean;
     clapMode?: boolean;
+    /** Firmware v2.2 runtime wheel flip (`r`). */
+    wheelFlip?: boolean;
   };
+  /** Last heading-hold step result (`S:` line). */
+  lastStep: { movedCm: number; why: 'd' | 'o' | 'l' | 't' | 'x'; at: number } | null;
   /** Firmware v2.1 compass + accelerometer (`M:` lines). */
   motion: Motion | null;
   motionAt: number | null;
@@ -49,6 +53,7 @@ export const EMPTY_LIVE: LiveCar = {
   motionAt: null,
   bumpAt: null,
   lastClap: null,
+  lastStep: null,
   capsRaw: null,
 };
 

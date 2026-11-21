@@ -85,11 +85,23 @@ interface SimState {
   autoCmd: 'w' | 'd' | 'x';
   autoUntil: number;
   bumped: boolean;
+  /** Firmware v2.2 `r1`: wheels reversed at runtime. `motion` is always the REAL direction. */
+  flip: boolean;
+  /** Firmware v2.2 heading-hold step in progress. */
+  step: {
+    dir: 1 | -1;
+    target: number;
+    startCm: number;
+    startT: number;
+    until: number;
+    moved: number;
+  } | null;
   /** Firmware v2 `o`: forward obstacle stop in cm, 0 = off. Resets on disconnect. */
   obstacleCm: number;
 }
 
 const encoder = new TextEncoder();
+const FLIPPED = { w: 's', s: 'w', a: 'd', d: 'a' } as const;
 const decoder = new TextDecoder();
 
 export class MockTransport implements CarTransport {
@@ -218,6 +230,8 @@ export class MockTransport implements CarTransport {
         autoCmd: 'x',
         autoUntil: 0,
         bumped: false,
+        flip: false,
+        step: null,
       };
       this.sims.set(id, s);
     }
@@ -232,6 +246,8 @@ export class MockTransport implements CarTransport {
     sim.soundOn = true;
     sim.clapMode = false;
     sim.autoCmd = 'x';
+    sim.flip = false;
+    sim.step = null;
     if (sim.timer) clearInterval(sim.timer);
     sim.timer = null;
     sim.handlers = null;
@@ -245,11 +261,13 @@ export class MockTransport implements CarTransport {
       const letter = line[0];
       const arg = Number(line.slice(1));
       if (letter === 'x' || letter === ' ') {
+        this.endStep(sim, 'x');
         sim.motion = 'x';
         sim.autoCmd = 'x';
       } else if (letter === 'w' || letter === 's' || letter === 'a' || letter === 'd') {
         if (sim.lifted && sim.liftStop) continue; // lift-stop on: lifted cars ignore drive letters
-        sim.motion = letter;
+        this.endStep(sim, 'x');
+        sim.motion = sim.flip ? FLIPPED[letter] : letter; // real direction of travel
         sim.autoCmd = 'x'; // the app takes over from a clap move
         if (Number.isFinite(arg) && arg > 0) sim.speed = arg;
         sim.lastDriveAt = performance.now();
@@ -262,20 +280,46 @@ export class MockTransport implements CarTransport {
         sim.obstacleCm = Number.isInteger(arg) && arg >= 10 && arg <= 100 ? arg : 0;
       } else if (letter === 'm' && profile.newFirmware) {
         sim.soundOn = arg === 1;
+      } else if (letter === 'r' && profile.newFirmware) {
+        this.endStep(sim, 'x');
+        sim.flip = arg === 1;
+        sim.motion = 'x';
+      } else if ((letter === 'f' || letter === 'b') && profile.newFirmware) {
+        const [cmText, speedText] = line.slice(1).split(',');
+        const cm = cmText ? Number(cmText) : 10;
+        const sp = Number(speedText);
+        if (sp >= 200 && sp <= 1023) sim.speed = sp;
+        if (cm >= 1 && cm <= 100 && !(sim.lifted && sim.liftStop)) {
+          this.endStep(sim, 'x');
+          const now = performance.now();
+          const startCm = profile.hasUltrasonic && sim.distance <= 300 ? sim.distance : 0;
+          const estMs = (cm * 1000 * 700) / (25 * Math.max(200, sim.speed));
+          sim.step = {
+            dir: letter === 'f' ? 1 : -1,
+            target: cm,
+            startCm,
+            startT: now,
+            until: now + (startCm > 0 ? estMs * 3 + 500 : estMs),
+            moved: 0,
+          };
+          sim.autoCmd = 'x';
+          sim.motion = letter === 'f' ? 'w' : 's';
+        }
       } else if (letter === 'k' && profile.newFirmware) {
         sim.clapMode = arg === 1;
         sim.autoCmd = 'x';
       } else if (letter === '?' && profile.newFirmware) {
-        this.send(sim, `C:2.1,${profile.hasUltrasonic ? 1 : 0},1,1\n`);
+        this.send(sim, `C:2.2,${profile.hasUltrasonic ? 1 : 0},1,1\n`);
       }
     }
   }
 
   private tick(profile: MockCarProfile, sim: SimState) {
     if (!sim.connected) return;
-    // Firmware watchdog: no drive letter for 250 ms -> stop.
-    if (sim.motion !== 'x' && performance.now() - sim.lastDriveAt > CAR_WATCHDOG_MS)
+    // Firmware watchdog: no drive letter for 250 ms -> stop (steps are bounded on their own).
+    if (!sim.step && sim.motion !== 'x' && performance.now() - sim.lastDriveAt > CAR_WATCHDOG_MS)
       sim.motion = 'x';
+    if (sim.step) this.stepTick(profile, sim);
     if (sim.lifted && sim.liftStop) sim.motion = 'x';
     // Clap moves: bounded, end when lifted, and the app's commands win.
     if (sim.autoCmd !== 'x' && (performance.now() > sim.autoUntil || sim.lifted)) sim.autoCmd = 'x';
@@ -314,6 +358,37 @@ export class MockTransport implements CarTransport {
       this.send(sim, `M:${h},${pitch},${roll},${sim.bumped ? 1 : 0}\n`);
       sim.bumped = false;
     }
+  }
+
+  private stepTick(profile: MockCarProfile, sim: SimState) {
+    const st = sim.step;
+    if (!st) return;
+    const now = performance.now();
+    if (sim.lifted) return this.endStep(sim, 'l');
+    if (st.startCm > 0) {
+      st.moved = Math.round(st.dir > 0 ? st.startCm - sim.distance : sim.distance - st.startCm);
+      if (st.moved >= st.target) return this.endStep(sim, 'd');
+      if (now >= st.until) return this.endStep(sim, 't');
+    } else if (now >= st.until) {
+      st.moved = st.target;
+      return this.endStep(sim, 'd');
+    }
+    if (st.dir > 0 && profile.hasUltrasonic && sim.distance < Math.max(10, sim.obstacleCm))
+      return this.endStep(sim, 'o');
+    sim.motion = st.dir > 0 ? 'w' : 's';
+  }
+
+  private endStep(sim: SimState, why: 'd' | 'o' | 'l' | 't' | 'x') {
+    const st = sim.step;
+    if (!st) return;
+    if (st.startCm === 0 && why !== 'd') {
+      st.moved = Math.round(
+        (st.target * (performance.now() - st.startT)) / Math.max(1, st.until - st.startT),
+      );
+    }
+    sim.step = null;
+    sim.motion = 'x';
+    this.send(sim, `S:${Math.max(0, Math.min(999, st.moved))},${why}\n`);
   }
 
   /** Test/dev hook: someone claps n times near the fake car (it must be in clap mode). */

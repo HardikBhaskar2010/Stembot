@@ -1,4 +1,4 @@
-import { honk, locate, pulse, setLocked, stopAll, voiceMove } from '../control/fleet';
+import { honk, locate, pulse, setLocked, step, stopAll, voiceMove } from '../control/fleet';
 import { SPEED_STEP } from '../protocol/constants';
 import { useGarage } from '../store/garage';
 import { useSettings } from '../store/settings';
@@ -18,6 +18,9 @@ export function runVoiceAction(action: VoiceAction, targets: string[]): void {
       return;
     case 'spin':
       pulse(targets, action.dir, 'spin');
+      return;
+    case 'step':
+      step(targets, action.dir);
       return;
     case 'speed': {
       const g = useGarage.getState();

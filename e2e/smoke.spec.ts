@@ -55,8 +55,8 @@ test.describe('first run and screens', () => {
     await expect(page.getByRole('heading', { name: 'Dev options' })).toBeVisible();
     const fwTable = page.getByRole('table', { name: 'Sent to each car' });
     await expect(fwTable).toContainText('i0');
-    await expect(fwTable).toContainText('C:2.1,1,1,1'); // Rocket: sensor + horn + compass
-    await expect(fwTable).toContainText('C:2.1,0,1,1'); // Comet: no distance sensor
+    await expect(fwTable).toContainText('C:2.2,1,1,1'); // Rocket: sensor + horn + compass
+    await expect(fwTable).toContainText('C:2.2,0,1,1'); // Comet: no distance sensor
     await page.waitForTimeout(500);
     await shot(page, info, '09-dev-live');
     await axe(page, info, 'dev');
@@ -458,5 +458,24 @@ test.describe('firmware v2.1: compass, clap commands, car sounds, voice', () => 
     );
     await page.goto(page.url().replace('#/settings', '#/'));
     await expect(page.getByRole('button', { name: /Hold to talk/ })).toHaveCount(0);
+  });
+});
+
+test.describe('firmware v2.2: heading-hold steps', () => {
+  test('Step forward quick command moves about 10 cm and shows the result', async ({
+    page,
+  }, info) => {
+    await fresh(page);
+    await addCar(page, 'Rocket', 'drive');
+    await expect(page.locator('.radar__num')).toBeVisible({ timeout: 3000 });
+    await page.waitForTimeout(400);
+    await page.getByRole('button', { name: 'Step forward 10 cm' }).click();
+    await page.waitForTimeout(150);
+    expect((await mock(page).received(CAR1)).some((l) => /^f10,\d+$/.test(l))).toBe(true);
+    await expect(page.locator('.chip--step')).toContainText(/Rocket (moved|stopped)/, {
+      timeout: 4000,
+    });
+    await shot(page, info, '21-drive-step');
+    expect(await mock(page).motion(CAR1)).toBe('x');
   });
 });

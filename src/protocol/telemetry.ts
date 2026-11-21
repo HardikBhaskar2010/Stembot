@@ -31,11 +31,21 @@ export interface Motion {
   bump: boolean;
 }
 
+/** Why a step ended: done, obstacle, lifted, time cap, cancelled. */
+export type StepEnd = 'd' | 'o' | 'l' | 't' | 'x';
+
+export interface StepResult {
+  movedCm: number;
+  why: StepEnd;
+}
+
 export type ParsedLine =
   | { type: 'telemetry'; value: Telemetry }
   | { type: 'motion'; value: Motion }
   /** Firmware v2.1 `K:<claps>`: a clap command started on the car. */
   | { type: 'clap'; value: { claps: 1 | 2 | 3 } }
+  /** Firmware v2.2 `S:<cm>,<why>`: a heading-hold step ended. */
+  | { type: 'step'; value: StepResult }
   | { type: 'capabilities'; value: Capabilities }
   | { type: 'unknown'; raw: string }
   | { type: 'invalid'; raw: string; reason: string };
@@ -44,6 +54,7 @@ const TELEMETRY_RE = /^D:(\d{1,4}),([01]),([01]),([01])$/;
 const CAPS_RE = /^C:([0-9A-Za-z.-]{1,8}),([01]),([01])(?:,([01]))?$/;
 const MOTION_RE = /^M:(-?\d{1,3}),(-?\d{1,3}),(-?\d{1,3}),([01])$/;
 const CLAP_RE = /^K:([1-3])$/;
+const STEP_RE = /^S:(\d{1,3}),([doltx])$/;
 const PRINTABLE = /^[\x20-\x7e]*$/;
 
 export function parseLine(input: string): ParsedLine {
@@ -104,6 +115,12 @@ export function parseLine(input: string): ParsedLine {
     };
   }
 
+  if (raw.startsWith('S:')) {
+    const m = STEP_RE.exec(raw);
+    if (!m) return { type: 'invalid', raw, reason: 'bad step format' };
+    return { type: 'step', value: { movedCm: Number(m[1]), why: m[2] as StepEnd } };
+  }
+
   if (raw.startsWith('K:')) {
     const m = CLAP_RE.exec(raw);
     if (!m) return { type: 'invalid', raw, reason: 'bad clap format' };
@@ -150,4 +167,10 @@ export class LineAssembler {
   reset(): void {
     this.buffer = '';
   }
+}
+
+/** Firmware version at least `min` (e.g. "2.2"); false when unknown or unparsable. */
+export function firmwareAtLeast(caps: Capabilities | null | undefined, min: number): boolean {
+  const v = caps ? Number.parseFloat(caps.version) : Number.NaN;
+  return Number.isFinite(v) && v >= min - 1e-9;
 }

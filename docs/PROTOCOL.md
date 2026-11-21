@@ -1,6 +1,6 @@
 # STEMBOT car protocol (app side)
 
-Source of truth: firmware v2.1 (`stembot_fw_boardA.ts`, `stembot_fw_boardB.ts` in the repo root) and the GATT log from the real car (Nov 2026). Code: `src/protocol/`.
+Source of truth: firmware v2.2 (`stembot_fw_boardA.ts`, `stembot_fw_boardB.ts` in the repo root) and the GATT log from the real car (Nov 2026). Code: `src/protocol/`.
 
 ## Link
 
@@ -30,6 +30,8 @@ One command per write, ending in `\n`, at most 20 bytes.
 | `o<cm>` / `o0` | forward obstacle stop at 10–100 cm / off. Resets on disconnect | after (re)connect only if the user set it; `o0` when the user turns it off |
 | `m1` / `m0` | car sounds on / off (v2.1, car default on, resets on disconnect) | after every (re)connect, and when Settings → Car sounds changes |
 | `k1` / `k0` | clap commands on / off (v2.1, default off, resets on disconnect) | after (re)connect if the car's Clap commands switch is on, and when it changes |
+| `f<cm>,<speed>` / `b<cm>,<speed>` | step about `cm` (1–100) forward / back holding the compass heading (v2.2) | Step forward / Step back quick commands and voice ("step forward"), 10 cm at the car's speed |
+| `r1` / `r0` | wheels reversed at runtime (v2.2, resets on disconnect; combined with compiled `FLIP`) | after (re)connect and when "Reverse wheels" changes, **only once this session's `C:` reply says 2.2+** |
 
 Unknown letters are ignored by the car and do not refresh its watchdog (firmware v2, verified in source).
 
@@ -77,3 +79,11 @@ Command queue rule (`CarLink`): drive and stop lines are newest-wins; settings l
 Car buttons: **A** = calibrate compass (motors held off; the firmware never reads the heading before this, because MakeCode's `compassHeading()` starts the calibration game by itself). **B** = emergency stop.
 
 Sound: firmware v2.1 calls `pins.setAudioPinEnabled(false)` and `music.setBuiltInSpeakerEnabled(true)` (verified in the pxt-microbit source) so tones play on the built-in speaker only and never on P0 (a wheel pin) or P1/P2 (ultrasonic).
+
+## Firmware v2.2 additions
+
+**Heading-hold steps** (`f`/`b`): the car locks its compass heading and every 20 ms speeds one wheel and slows the other in proportion to the error (`STEP_KP` 12 speed units per degree, capped at 300). Turning rate follows (left − right) in both directions of travel, so the same correction works forward and back. Distance: the ultrasonic gap to whatever is ahead shrinks (forward) or grows (back) by the step length; with nothing within 300 cm the step is timed from `STEP_CM_PER_S` (25 cm/s at speed 700, TO VALIDATE per car). Ends: done, obstacle (never closer than 10 cm or the set obstacle stop), lifted, time cap, or cancelled by any drive letter / STOP / button / link loss. Result: `S:<cm>,<d|o|l|t|x>`.
+
+**Runtime wheel flip** (`r`): before v2.2 the app's "Reverse wheels" swapped letters on the phone, so the firmware never knew and its forward-only logic (obstacle stop, steps) looked the wrong way on such cars. From v2.2 the app sends `r1` instead and stops swapping, so every sensor rule works in the car's real directions. The app decides from the live `C:` reply only, never from saved data, so an older car can never end up unswapped. Board B already has `FLIP = true` compiled; leave its Reverse wheels off.
+
+Both boards now have `HAS_ULTRASONIC = 1` (owner, Nov 22 2026).

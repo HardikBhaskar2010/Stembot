@@ -1562,3 +1562,19 @@
   flex: 1 1 140px;
   min-width: 0;
 }
+
+/* Firmware v2.2 step result (radar corner, a few seconds). */
+.chip--step {
+  color: var(--go);
+  background: rgb(26 18 14 / 0.72);
+}
+
+.chip--step-o,
+.chip--step-l,
+.chip--step-t {
+  color: var(--caution);
+}
+
+.chip--step-x {
+  color: var(--ink-dim);
+}

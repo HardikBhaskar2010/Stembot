@@ -13,6 +13,8 @@ export type QuickCommandId =
   | 'spin-right'
   | 'nudge-forward'
   | 'nudge-back'
+  | 'step-forward'
+  | 'step-back'
   | 'mode-slow'
   | 'mode-normal'
   | 'mode-turbo'
@@ -57,7 +59,7 @@ export const DEFAULT_SETTINGS: Settings = {
   devOptions: false,
   mockMode: false,
   speedMode: 'normal',
-  pinned: ['spin-left', 'spin-right', 'nudge-forward', 'nudge-back'],
+  pinned: ['spin-left', 'spin-right', 'step-forward', 'step-back'],
   keyboardHintSeen: false,
   liftOffNoticeSeen: false,
   carSounds: true,

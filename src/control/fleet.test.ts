@@ -6,6 +6,7 @@ import { useNotify } from '../store/notify';
 import { useSettings } from '../store/settings';
 import { getMockTransport } from '../transport';
 import {
+  canStep,
   connectCar,
   disconnectCar,
   hold,
@@ -14,7 +15,9 @@ import {
   setClapMode,
   setNorthHere,
   setObstacleStop,
+  setReversed,
   setStopWhenLifted,
+  step,
   stopAll,
 } from './fleet';
 
@@ -97,9 +100,9 @@ describe('firmware v2 settings on connect', () => {
     const car = addMockCar(CAR_A, 'Rocket');
     await connect(car);
     await vi.advanceTimersByTimeAsync(100);
-    expect(useLive.getState().cars[car.id]?.capsRaw).toBe('C:2.1,1,1,1');
+    expect(useLive.getState().cars[car.id]?.capsRaw).toBe('C:2.2,1,1,1');
     expect(useGarage.getState().cars[0]?.caps).toEqual({
-      version: '2.1',
+      version: '2.2',
       hasUltrasonic: true,
       hasHorn: true,
       hasCompass: true,
@@ -333,5 +336,73 @@ describe('firmware v2.1 settings', () => {
     mock.calibrateCompass(CAR_B);
     await vi.advanceTimersByTimeAsync(400);
     expect(typeof useLive.getState().cars[car.id]?.motion?.headingDeg).toBe('number');
+  });
+});
+
+describe('firmware v2.2: heading-hold steps and firmware wheel flip', () => {
+  it('a reversed car gets r1 once v2.2 is confirmed, and drive letters are no longer swapped', async () => {
+    const car = addMockCar(CAR_A, 'Rocket');
+    useGarage.getState().updateCar(car.id, { reversed: true });
+    await connect(car);
+    await vi.advanceTimersByTimeAsync(400);
+    const from = mock.receivedLines(CAR_A).length;
+    expect(mock.receivedLines(CAR_A)).toContain('r1');
+    hold([car.id], 'forward');
+    await vi.advanceTimersByTimeAsync(200);
+    const sent = linesSince(CAR_A, from);
+    expect(sent.some((l) => l.startsWith('w'))).toBe(true); // not swapped to s
+    expect(mock.motionOf(CAR_A)).toBe('s'); // the firmware flips the wheels instead
+    release([car.id]);
+  });
+
+  it('turning Reverse wheels off on a v2.2 car stops it and sends r0', async () => {
+    const car = addMockCar(CAR_A, 'Rocket');
+    useGarage.getState().updateCar(car.id, { reversed: true });
+    await connect(car);
+    await vi.advanceTimersByTimeAsync(400);
+    setReversed(car.id, false);
+    await vi.advanceTimersByTimeAsync(100);
+    const lines = mock.receivedLines(CAR_A);
+    expect(lines.at(-1)).toBe('r0');
+    expect(lines.slice(-3)).toContain('x');
+  });
+
+  it('a step drives about 10 cm then reports the result', async () => {
+    const car = addMockCar(CAR_A, 'Rocket');
+    await connect(car);
+    await vi.advanceTimersByTimeAsync(400);
+    expect(canStep(car.id)).toBe(true);
+    step([car.id], 'forward');
+    await vi.advanceTimersByTimeAsync(100);
+    expect(mock.receivedLines(CAR_A).some((l) => /^f10,\d+$/.test(l))).toBe(true);
+    expect(mock.motionOf(CAR_A)).toBe('w');
+    await vi.advanceTimersByTimeAsync(3000);
+    const res = useLive.getState().cars[car.id]?.lastStep;
+    expect(res?.why).toMatch(/^[dot]$/);
+    expect(mock.motionOf(CAR_A)).toBe('x');
+  });
+
+  it('STOP cancels a step and the car reports it', async () => {
+    const car = addMockCar(CAR_A, 'Rocket');
+    await connect(car);
+    await vi.advanceTimersByTimeAsync(400);
+    step([car.id], 'backward');
+    await vi.advanceTimersByTimeAsync(160);
+    expect(mock.motionOf(CAR_A)).toBe('s');
+    stopAll('button');
+    await vi.advanceTimersByTimeAsync(100);
+    expect(mock.motionOf(CAR_A)).toBe('x');
+    expect(useLive.getState().cars[car.id]?.lastStep?.why).toBe('x');
+  });
+
+  it('older firmware cannot step (the command is not sent)', async () => {
+    const car = addMockCar('mock-tuvog', 'Old');
+    await connect(car);
+    await vi.advanceTimersByTimeAsync(600);
+    expect(canStep(car.id)).toBe(false);
+    const from = mock.receivedLines('mock-tuvog').length;
+    step([car.id], 'forward');
+    await vi.advanceTimersByTimeAsync(300);
+    expect(linesSince('mock-tuvog', from).some((l) => l.startsWith('f'))).toBe(false);
   });
 });

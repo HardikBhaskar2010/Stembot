@@ -1,8 +1,8 @@
 import { t } from '../i18n/en';
 import { haptic, sound } from '../platform/feedback';
 import { effectiveSpeed, type Direction } from '../protocol/commands';
-import { NUDGE_MS, SETTINGS_RESEND_DELAY_MS, SPIN_MS } from '../protocol/constants';
-import { LineAssembler, parseLine } from '../protocol/telemetry';
+import { NUDGE_MS, SETTINGS_RESEND_DELAY_MS, SPIN_MS, STEP_CM } from '../protocol/constants';
+import { firmwareAtLeast, LineAssembler, parseLine } from '../protocol/telemetry';
 import { useDevLog } from '../store/devlog';
 import { useGarage, type SavedCar } from '../store/garage';
 import { useLive } from '../store/live';
@@ -33,6 +33,21 @@ const connecting = new Set<string>();
 
 function car(carId: string): SavedCar | undefined {
   return useGarage.getState().cars.find((c) => c.id === carId);
+}
+
+/**
+ * Firmware v2.2+ reverses the wheels itself (`r1`), so its obstacle stop and heading-hold
+ * steps see the car's real directions. Decided only from THIS session's capability reply:
+ * stale saved data must never make the app stop swapping letters on an older car.
+ */
+function firmwareFlips(carId: string): boolean {
+  return firmwareAtLeast(useLive.getState().cars[carId]?.capabilities, 2.2);
+}
+
+function sendWheelFlip(s: Session, on: boolean) {
+  s.link.send({ kind: 'wheelFlip', on });
+  const fw = useLive.getState().cars[s.carId]?.fw;
+  if (fw) useLive.getState().patch(s.carId, { fw: { ...fw, wheelFlip: on, sentAt: Date.now() } });
 }
 
 function logLinkEvent(carId: string, e: LinkEvent) {
@@ -72,6 +87,7 @@ function sendFirmwareSettings(s: Session) {
   // Firmware v2.1 (older firmware ignores unknown letters): car sounds and clap mode.
   s.link.send({ kind: 'carSounds', on: carSounds });
   if (c.clapMode) s.link.send({ kind: 'clapMode', on: true });
+  if (firmwareFlips(s.carId)) s.link.send({ kind: 'wheelFlip', on: c.reversed });
   useLive.getState().patch(s.carId, {
     fw: {
       liftStop: c.stopWhenLifted,
@@ -79,6 +95,7 @@ function sendFirmwareSettings(s: Session) {
       sentAt: Date.now(),
       carSounds,
       clapMode: c.clapMode,
+      ...(firmwareFlips(s.carId) ? { wheelFlip: c.reversed } : {}),
     },
   });
 }
@@ -124,8 +141,14 @@ function onLine(s: Session, line: string) {
         json: JSON.stringify(parsed.value),
       });
   } else if (parsed.type === 'capabilities') {
+    const hadFlip = firmwareFlips(s.carId);
     live.patch(s.carId, { capabilities: parsed.value, capsRaw: line });
     useGarage.getState().updateCar(s.carId, { caps: parsed.value });
+    // v2.2 confirmed: hand wheel reversal to the firmware (from now on no letter swapping).
+    if (!hadFlip && firmwareFlips(s.carId)) {
+      s.link.stop();
+      sendWheelFlip(s, car(s.carId)?.reversed ?? false);
+    }
     log.add({
       t: Date.now(),
       carId: s.carId,
@@ -152,6 +175,10 @@ function onLine(s: Session, line: string) {
   } else if (parsed.type === 'clap') {
     live.patch(s.carId, { lastClap: { claps: parsed.value.claps, at: Date.now() } });
     useNotify.getState().announce(t(`clap.heard${parsed.value.claps}`, { name }));
+    log.add({ t: Date.now(), carId: s.carId, dir: 'rx', text: line });
+  } else if (parsed.type === 'step') {
+    live.patch(s.carId, { lastStep: { ...parsed.value, at: Date.now() } });
+    useNotify.getState().announce(stepMessage(name, parsed.value.movedCm, parsed.value.why));
     log.add({ t: Date.now(), carId: s.carId, dir: 'rx', text: line });
   } else if (parsed.type === 'invalid') {
     log.add({
@@ -256,7 +283,8 @@ export async function openSession(c: SavedCar): Promise<void> {
     onDisconnect: () => handleLost(c.id),
   });
   const link = new CarLink(conn, {
-    reversed: () => car(c.id)?.reversed ?? false,
+    // Old firmware: the app swaps w/s and a/d. v2.2+: the firmware flips (r1), no swapping.
+    reversed: () => (car(c.id)?.reversed ?? false) && !firmwareFlips(c.id),
     onEvent: (e) => logLinkEvent(c.id, e),
   });
   const s: Session = {
@@ -288,6 +316,7 @@ export async function openSession(c: SavedCar): Promise<void> {
     motionAt: null,
     bumpAt: null,
     lastClap: null,
+    lastStep: null,
     fw: { liftStop: null, obstacleCm: null, sentAt: null },
   });
   useDevLog
@@ -451,6 +480,40 @@ export function setNorthHere(carId: string): boolean {
 export function voiceMove(carIds: string[], dir: Direction, ms: number): void {
   if (useLive.getState().locked) return;
   for (const id of carIds) sessions.get(id)?.link.pulse(dir, speedFor(id), ms);
+}
+
+/** Plain-words result of a step, for the screen and screen readers. */
+export function stepMessage(
+  name: string,
+  movedCm: number,
+  why: 'd' | 'o' | 'l' | 't' | 'x',
+): string {
+  return t(`step.end_${why}`, { name, cm: movedCm });
+}
+
+/** Does this car's firmware (this session) support heading-hold steps? */
+export function canStep(carId: string): boolean {
+  return sessions.has(carId) && firmwareFlips(carId);
+}
+
+/** Step about STEP_CM forward/back on each car, holding its compass heading (firmware v2.2). */
+export function step(carIds: string[], dir: 'forward' | 'backward'): void {
+  if (useLive.getState().locked) return;
+  for (const id of carIds) {
+    const s = sessions.get(id);
+    if (!s || !firmwareFlips(id)) continue;
+    s.link.stop(); // end any held drive first
+    s.link.send({ kind: 'step', dir, cm: STEP_CM, speed: speedFor(id) });
+  }
+}
+
+/** Per-car "Reverse wheels": firmware flip on v2.2+, app letter swap before that. Stops first. */
+export function setReversed(carId: string, on: boolean): void {
+  useGarage.getState().updateCar(carId, { reversed: on });
+  const s = sessions.get(carId);
+  if (!s) return;
+  s.link.stop();
+  if (firmwareFlips(carId)) sendWheelFlip(s, on);
 }
 
 export function honk(carIds: string[]): void {

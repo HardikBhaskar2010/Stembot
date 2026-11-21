@@ -25,6 +25,10 @@ export type CarCommand =
   | { kind: 'carSounds'; on: boolean }
   /** Firmware v2.1 clap commands: `k1` on, `k0` off (car default off, resets on disconnect). */
   | { kind: 'clapMode'; on: boolean }
+  /** Firmware v2.2 heading-hold step: `f<cm>,<speed>` / `b<cm>,<speed>` (physical direction). */
+  | { kind: 'step'; dir: 'forward' | 'backward'; cm: number; speed: number }
+  /** Firmware v2.2 wheels reversed at runtime: `r1` / `r0` (resets on disconnect). */
+  | { kind: 'wheelFlip'; on: boolean }
   /** Dev options: any printable ASCII string. */
   | { kind: 'raw'; text: string };
 
@@ -101,6 +105,12 @@ export function encodeCommand(cmd: CarCommand, opts: { reversed?: boolean } = {}
       return cmd.on ? 'm1\n' : 'm0\n';
     case 'clapMode':
       return cmd.on ? 'k1\n' : 'k0\n';
+    case 'step': {
+      const cm = Math.min(100, Math.max(1, Math.round(Number.isFinite(cmd.cm) ? cmd.cm : 10)));
+      return `${cmd.dir === 'forward' ? 'f' : 'b'}${cm},${clampSpeed(cmd.speed)}\n`;
+    }
+    case 'wheelFlip':
+      return cmd.on ? 'r1\n' : 'r0\n';
     case 'raw': {
       const text = cmd.text.replace(/[\r\n]+$/g, '');
       if (!PRINTABLE.test(text))

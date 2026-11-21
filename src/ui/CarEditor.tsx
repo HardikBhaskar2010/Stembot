@@ -1,6 +1,6 @@
 import { Trash2, X } from 'lucide-react';
 import { useState } from 'react';
-import { disconnectCar } from '../control/fleet';
+import { disconnectCar, setReversed } from '../control/fleet';
 import { t } from '../i18n/en';
 import { SPEED_MAX, SPEED_MIN } from '../protocol/constants';
 import { CAR_COLORS, useGarage } from '../store/garage';
@@ -101,7 +101,7 @@ function EditorSheet({ carId, onClose }: { carId: string; onClose: () => void })
                 <Switch
                   label={t('group.reverseFor', { name: car.name })}
                   checked={car.reversed}
-                  onChange={(v) => update(car.id, { reversed: v })}
+                  onChange={(v) => setReversed(car.id, v)}
                 />
               }
             />

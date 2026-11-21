@@ -1,5 +1,7 @@
 import {
   ArrowDownToLine,
+  ChevronsDown,
+  ChevronsUp,
   ArrowUpToLine,
   Gauge,
   Lock,
@@ -12,7 +14,7 @@ import {
   Turtle,
   type LucideIcon,
 } from 'lucide-react';
-import { honk, locate, pulse, setLocked, stopAll } from '../control/fleet';
+import { canStep, honk, locate, pulse, setLocked, step, stopAll } from '../control/fleet';
 import { t } from '../i18n/en';
 import { useLive } from '../store/live';
 import { useSettings, type QuickCommandId } from '../store/settings';
@@ -32,6 +34,11 @@ export interface QuickCommand {
 const needsHorn = (targets: string[]) => {
   const cars = useLive.getState().cars;
   return targets.some((id) => cars[id]?.capabilities?.hasHorn) ? null : t('commands.needsFirmware');
+};
+const needsStep = (targets: string[]) => {
+  if (useLive.getState().locked) return t('drive.lockedHint');
+  if (targets.length === 0) return t('drive.noCar');
+  return targets.some((id) => canStep(id)) ? null : t('commands.needsFirmware22');
 };
 const needsCars = (targets: string[]) => (targets.length > 0 ? null : t('drive.noCar'));
 const notLocked = (targets: string[]) =>
@@ -74,6 +81,20 @@ export const COMMANDS: QuickCommand[] = [
     icon: ArrowDownToLine,
     unavailable: notLocked,
     run: (ids) => pulse(ids, 'backward', 'nudge'),
+  },
+  {
+    id: 'step-forward',
+    label: t('commands.step-forward'),
+    icon: ChevronsUp,
+    unavailable: needsStep,
+    run: (ids) => step(ids, 'forward'),
+  },
+  {
+    id: 'step-back',
+    label: t('commands.step-back'),
+    icon: ChevronsDown,
+    unavailable: needsStep,
+    run: (ids) => step(ids, 'backward'),
   },
   {
     id: 'mode-slow',

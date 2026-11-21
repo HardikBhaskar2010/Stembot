@@ -70,3 +70,13 @@ Write down pass/fail and the phone/browser model for each line.
 40. [ ] Clap safety: lift the car during a clap move: it stops. Clap toward a wall: it stops at ~25 cm (Board A). App STOP and button B end a clap move. Disconnect: clap mode is off after reconnect unless the switch is on.
 41. [ ] Motor noise and the car's own sounds must not count as claps (drive with clap mode on; no unexpected moves).
 42. [ ] Voice (Chrome/Edge desktop with on-device speech): Settings → Voice commands on. If it offers a download, download the English pack. Hold "Hold to talk", say "forward": the car moves ~1 s. Say "stop" mid-move: it stops as you say it. On browsers without on-device speech, the switch explains and stays off.
+
+## H. Firmware v2.2 (steps, runtime flip). Flash v2.2 to both boards first
+
+43. [ ] Both boards: Drive shows a distance (ultrasonic enabled on Board B). If Board B shows "No echo" permanently, its sensor is not connected.
+44. [ ] Calibrate the compass (button A). On a **flat** floor, Step forward 10 cm five times toward a wall: each step ~10 cm (Drive shows "moved 10 cm"), and the car stays pointed the same way.
+45. [ ] On a **slope** (a board propped up ~10°), driving across it: compare Step forward with plain forward. Steps should hold the line; plain driving drifts. If steps zig-zag, lower `STEP_KP`; if they still drift, raise it.
+46. [ ] With nothing in front (open room): steps fall back to time. Measure the real distance and set `STEP_CM_PER_S` so 10 cm ≈ 10 cm.
+47. [ ] Step toward a wall from 15 cm: it stops at about 10 cm with "something ahead".
+48. [ ] Lift the car during a step: it stops ("lifted"). Press STOP or button B during a step: it stops ("cancelled").
+49. [ ] Reverse wheels on a v2.2 car: Dev options shows `r1`; forward is forward; Step forward goes forward; obstacle stop still watches the front. Board B (FLIP compiled): leave Reverse wheels **off**.

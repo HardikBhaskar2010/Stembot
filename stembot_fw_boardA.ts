@@ -1,4 +1,4 @@
-// STEMBOT firmware v2.1, Bluetooth UART. Newest command wins.
+// STEMBOT firmware v2.2, Bluetooth UART. Newest command wins.
 // BOARD: Board A (first car, normal wheel direction)
 // Right: P8 fwd / P0 back. Left: P16 fwd / P15 back.
 // Ultrasonic: TRIG P1, ECHO P2. Bottom IR: left P14, right P13 (reads 1 = no floor).
@@ -12,12 +12,18 @@
 //   m1 / m0  car sounds on / off (default ON)
 //   k1 / k0  clap commands on / off (default OFF): 1 clap = forward 1 s,
 //            2 claps = turn right 90 degrees, 3 claps = turn around
-//   o, i, m and k all reset to their defaults when the link drops.
+//   f<cm>[,<speed>] / b<cm>[,<speed>]  step forward / back about <cm> (1-100, default 10)
+//            holding the compass heading (straight on slopes); distance from the
+//            ultrasonic when something is in range, otherwise estimated from time
+//   r1 / r0  wheels reversed on / off, set from the app (added to FLIP below)
+//   o, i, m, k and r all reset to their defaults when the link drops.
 // Out, about every 150 ms each:
 //   "D:<cm>,<irL>,<irR>,<air>"            (cm 0 = no echo, air 1 = lifted)
 //   "M:<heading>,<pitch>,<roll>,<bump>"   (heading -1 until the compass is calibrated)
 // Out on events: "C:<version>,<hasUltrasonic>,<hasHorn>,<hasCompass>" on "?",
-//                "K:<claps>" when a clap command starts.
+//                "K:<claps>" when a clap command starts,
+//                "S:<cm moved>,<why>" when a step ends: d done, o obstacle, l lifted,
+//                t time cap, x cancelled by a command / STOP / link loss.
 // Buttons: A = calibrate compass (tilt to fill the screen; motors are held off), B = emergency stop.
 
 // FIRST: drive every wheel pin low so nothing floats and spins at boot.
@@ -31,7 +37,7 @@ const FLIP = false               // true = reverse both wheels (wheels wired the
 const HAS_ULTRASONIC = 1       // 1 if this car has a working ultrasonic sensor, else 0
 const HAS_HORN = 1                  // micro:bit V2 has a built-in speaker
 const HAS_COMPASS = 1               // micro:bit V2 has a compass (magnetometer)
-const FW_VERSION = "2.1"
+const FW_VERSION = "2.2"
 // -------------------------------------------------------------------------
 
 const TRIG = DigitalPin.P1
@@ -45,6 +51,11 @@ const BUMP_MG = 2200         // acceleration strength (milli-g) that counts as a
 const CLAP_LEVEL = 150       // microphone "loud" threshold for a clap (0-255). TO VALIDATE in the room
 const CLAP_WINDOW_MS = 1000  // claps are counted for this long after the first one
 const CLAP_OBSTACLE_CM = 25  // obstacle stop used during clap moves when none is set
+const STEP_KP = 12           // wheel-speed correction per degree off the locked heading. TO VALIDATE
+const STEP_MAX_CORR = 300    // cap on that correction (speed units)
+const STEP_CM_PER_S = 25     // ground speed at speed 700, used when nothing is in echo range. TO VALIDATE
+const STEP_ECHO_MAX_CM = 300 // farther than this, the echo is too unreliable to measure a step
+const STEP_OBSTACLE_CM = 10  // a step forward never drives closer than this (or the set obstacle stop)
 
 let speed = 700              // 0-1023
 let cmd = "x"                // newest command from the app: w s a d x
@@ -74,6 +85,14 @@ let lastClapAt = 0
 let autoCmd = "x"            // a move the car makes by itself after claps: w or d
 let autoUntil = 0
 let turnTarget = -1          // compass heading to stop turning at, -1 = timed turn
+let appFlip = false          // wheels reversed, set from the app with r1 / r0
+let stepDir = 0              // 1 = stepping forward, -1 = back, 0 = no step
+let stepTargetCm = 0
+let stepStartCm = 0          // echo distance when the step started; 0 = no echo, use time
+let stepHeading = -1         // heading to hold; -1 = compass not calibrated, drive straight
+let stepStartMs = 0
+let stepUntil = 0            // timed steps: planned end; echo steps: safety cap
+let stepMovedCm = 0
 
 // ---- sounds (built-in speaker only, see setup below) ---------------------
 // Each is a list of frequency, duration pairs; frequency 0 = rest.
@@ -113,8 +132,14 @@ function sfx(notes: number[], force: boolean) {
     })
 }
 
+// Wheels reversed = compiled FLIP, toggled by the app's "Reverse wheels" (r1). Everything above
+// the wheel functions (obstacle stop, steps, heading hold) then works in the car's real directions.
+function flipped(): boolean {
+    return FLIP != appFlip
+}
+
 function right(s: number) {
-    if (FLIP) {
+    if (flipped()) {
         s = -s
     }
     if (s >= 0) {
@@ -127,7 +152,7 @@ function right(s: number) {
 }
 
 function left(s: number) {
-    if (FLIP) {
+    if (flipped()) {
         s = -s
     }
     if (s >= 0) {
@@ -190,6 +215,99 @@ function heading(): number {
 function angleDiff(a: number, b: number): number {
     let d = Math.abs(a - b) % 360
     return d > 180 ? 360 - d : d
+}
+
+// Signed turn from `cur` to `target`, -180..180. Positive = turn right (clockwise).
+function angleTo(target: number, cur: number): number {
+    return ((target - cur + 540) % 360) - 180
+}
+
+function clampSpeed(s: number): number {
+    return Math.max(-1023, Math.min(1023, s))
+}
+
+// ---- steps: move about N cm in a straight line, holding the compass heading -----------
+// Turning rate follows (left - right) for both directions of travel, so the same correction
+// steers back to the locked heading whether the car steps forward or back.
+function startStep(dir: number, cm: number) {
+    if (calibrating || (liftStop && airborne)) {
+        return
+    }
+    cancelAuto()
+    cmd = "x"
+    let now = control.millis()
+    stepDir = dir
+    stepTargetCm = Math.max(1, Math.min(100, cm))
+    stepHeading = heading()
+    stepStartCm = HAS_ULTRASONIC ? distanceCm() : 0
+    if (stepStartCm > STEP_ECHO_MAX_CM) {
+        stepStartCm = 0
+    }
+    // Time a step would take at this speed (only an estimate; tune STEP_CM_PER_S per car).
+    let estMs = Math.idiv(stepTargetCm * 1000 * 700, STEP_CM_PER_S * Math.max(200, speed))
+    stepStartMs = now
+    stepUntil = now + (stepStartCm > 0 ? estMs * 3 + 500 : estMs)
+    stepMovedCm = 0
+    applied = ""             // the step drives the wheels directly
+}
+
+function endStep(why: string) {
+    if (stepDir == 0) {
+        return
+    }
+    if (stepStartCm == 0 && why != "d") {
+        // timed step cut short: estimate how far it got
+        let total = Math.max(1, stepUntil - stepStartMs)
+        stepMovedCm = Math.idiv(stepTargetCm * (control.millis() - stepStartMs), total)
+    }
+    stepDir = 0
+    applied = ""
+    stopAll()
+    if (linked) {
+        bluetooth.uartWriteString("S:" + Math.max(0, stepMovedCm) + "," + why + "\n")
+    }
+}
+
+// Called every loop pass while a step runs; lastCm was just measured.
+function stepTick(now: number) {
+    if (airborne) {
+        endStep("l")
+        return
+    }
+    if (calibrating) {
+        endStep("x")
+        return
+    }
+    if (stepStartCm > 0) {
+        if (lastCm > 0) {
+            stepMovedCm = stepDir > 0 ? stepStartCm - lastCm : lastCm - stepStartCm
+            if (stepMovedCm >= stepTargetCm) {
+                endStep("d")
+                return
+            }
+        }
+        if (now >= stepUntil) {
+            endStep("t")
+            return
+        }
+    } else if (now >= stepUntil) {
+        stepMovedCm = stepTargetCm
+        endStep("d")
+        return
+    }
+    let stopAt = Math.max(STEP_OBSTACLE_CM, obstacleStopCm)
+    if (stepDir > 0 && lastCm > 0 && lastCm < stopAt) {
+        endStep("o")
+        sfx(SND_OBSTACLE, false)
+        return
+    }
+    let base = speed * stepDir
+    let corr = 0
+    if (stepHeading >= 0) {
+        corr = Math.max(-STEP_MAX_CORR, Math.min(STEP_MAX_CORR, STEP_KP * angleTo(stepHeading, heading())))
+    }
+    left(clampSpeed(base + corr))
+    right(clampSpeed(base - corr))
 }
 
 function showLinkIcon() {
@@ -285,8 +403,10 @@ bluetooth.onBluetoothConnected(function () {
 
 bluetooth.onBluetoothDisconnected(function () {
     linked = false
+    endStep("x")
     cmd = "x"
     cancelAuto()
+    appFlip = false
     obstacleStopCm = 0
     liftStop = false
     soundOn = true
@@ -313,14 +433,42 @@ bluetooth.onUartDataReceived(serial.delimiters(Delimiters.NewLine), function () 
         }
         // lift-off stop on and car lifted, or compass calibrating: ignore drive commands
         if (!(liftStop && airborne) && !calibrating) {
+            endStep("x")     // the app takes over from any step or clap move
             cmd = c
             lastRx = control.millis()
-            cancelAuto()     // the app takes over from any clap move
+            cancelAuto()
         }
     } else if (c == "x" || c == " ") {
+        endStep("x")
         cmd = "x"
         lastRx = control.millis()
         cancelAuto()
+    } else if (c == "f" || c == "b") {
+        // f10 or f10,700: step about 10 cm, optionally at speed 700
+        let cm = 10
+        let comma = s.indexOf(",")
+        let num = comma > 0 ? s.substr(1, comma - 1) : s.substr(1, s.length - 1)
+        if (num.length > 0) {
+            cm = parseInt(num)
+        }
+        if (comma > 0) {
+            let sp = parseInt(s.substr(comma + 1, s.length - comma - 1))
+            if (sp >= 200 && sp <= 1023) {
+                speed = sp
+            }
+        }
+        if (cm >= 1 && cm <= 100) {
+            endStep("x")
+            startStep(c == "f" ? 1 : -1, cm)
+        }
+    } else if (c == "r") {
+        // wheels reversed, from the app: stop first so the change never jerks the car
+        endStep("x")
+        cmd = "x"
+        cancelAuto()
+        appFlip = on
+        applied = ""
+        stopAll()
     } else if (c == "q") {
         speed = Math.max(200, speed - 100)
     } else if (c == "e") {
@@ -433,7 +581,7 @@ basic.forever(function () {
     let sendD = linked && tickCount % TELEMETRY_EVERY == 0
     let sendM = linked && tickCount % TELEMETRY_EVERY == 3
     let stopCm = obstacleStopCm > 0 ? obstacleStopCm : (autoCmd == "w" ? CLAP_OBSTACLE_CM : 0)
-    if (stopCm > 0 || sendD) {
+    if (stopCm > 0 || sendD || stepDir != 0) {
         lastCm = distanceCm()
     }
 
@@ -457,7 +605,11 @@ basic.forever(function () {
         }
     }
     obstacleActive = blocked
-    apply(eff)
+    if (stepDir != 0) {
+        stepTick(now)        // a step drives the wheels itself, with heading correction
+    } else {
+        apply(eff)
+    }
 
     if (sendD) {
         let a = 0
@@ -483,6 +635,7 @@ input.onButtonPressed(Button.A, function () {
     if (calibrating) {
         return
     }
+    endStep("x")
     calibrating = true
     cmd = "x"
     cancelAuto()
@@ -495,6 +648,7 @@ input.onButtonPressed(Button.A, function () {
 })
 
 input.onButtonPressed(Button.B, function () {
+    endStep("x")
     cmd = "x"
     cancelAuto()
     stopAll()            // emergency stop
