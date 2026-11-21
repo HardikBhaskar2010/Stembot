@@ -12,6 +12,7 @@ import { useUi } from '../store/ui';
 import { DriveDeck } from '../ui/DriveDeck';
 import { Bars, Button, IconButton } from '../ui/primitives';
 import { Radar, zoneOf, type RadarState } from '../ui/Radar';
+import { CompassBadge } from '../ui/Compass';
 import { StatusChip, useNow } from '../ui/shared';
 
 export function Drive({ carId }: { carId: string }) {
@@ -109,6 +110,19 @@ export function Drive({ carId }: { carId: string }) {
             distanceCm={tel?.distanceCm ?? null}
             units={units}
             carName={car.name}
+            bump={live.bumpAt !== null && now - live.bumpAt < 700}
+            overlay={
+              <>
+                <CompassBadge car={car} live={live} now={now} />
+                {connected && car.clapMode && (
+                  <span className="chip chip--clap">
+                    {live.lastClap && now - live.lastClap.at < 2500
+                      ? t(`clap.heard${live.lastClap.claps}`, { name: car.name })
+                      : t('clap.listening')}
+                  </span>
+                )}
+              </>
+            }
           />
         }
       />

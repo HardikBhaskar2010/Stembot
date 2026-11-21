@@ -1,6 +1,6 @@
 import { ArrowLeft, ChevronRight } from 'lucide-react';
 import { goBack, navigate } from '../app/router';
-import { disconnectSource } from '../control/fleet';
+import { disconnectSource, setCarSounds } from '../control/fleet';
 import { requestMotionPermission } from '../control/safety';
 import { t } from '../i18n/en';
 import { useDevLog } from '../store/devlog';
@@ -13,7 +13,8 @@ import {
   type Units,
 } from '../store/settings';
 import { useGarage } from '../store/garage';
-import { LiftStopSwitch, ObstacleStopControl } from '../ui/CarOptions';
+import { ClapSwitch, LiftStopSwitch, ObstacleStopControl } from '../ui/CarOptions';
+import { VoiceSettings } from '../ui/VoiceSettings';
 import { Button, IconButton, Row, Segmented, Switch } from '../ui/primitives';
 
 export function Settings() {
@@ -100,7 +101,21 @@ export function Settings() {
               />
             }
           />
+          <Row
+            label={t('settings.carSounds')}
+            hint={t('settings.carSoundsHint')}
+            control={
+              <Switch
+                label={t('settings.carSounds')}
+                checked={s.carSounds}
+                onChange={setCarSounds}
+              />
+            }
+          />
         </div>
+
+        <h2 className="section-title">{t('voice.title')}</h2>
+        <VoiceSettings />
 
         <h2 className="section-title">{t('settings.look')}</h2>
         <div className="settings__group">
@@ -147,6 +162,7 @@ export function Settings() {
                 <h3 className="car-options__name">{c.name}</h3>
                 <LiftStopSwitch car={c} withHint />
                 <ObstacleStopControl car={c} />
+                <ClapSwitch car={c} withHint />
               </section>
             ))}
           </div>

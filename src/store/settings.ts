@@ -35,6 +35,10 @@ export interface Settings {
   keyboardHintSeen: boolean;
   /** One-time notice shown the first time "Stop when lifted" is turned off. */
   liftOffNoticeSeen: boolean;
+  /** Firmware v2.1 car event sounds (boot, connect, bump...). Sent as m1/m0 to every car. */
+  carSounds: boolean;
+  /** Push-to-talk voice commands (on-device recognition only). */
+  voice: boolean;
 }
 
 interface SettingsState extends Settings {
@@ -56,6 +60,8 @@ export const DEFAULT_SETTINGS: Settings = {
   pinned: ['spin-left', 'spin-right', 'nudge-forward', 'nudge-back'],
   keyboardHintSeen: false,
   liftOffNoticeSeen: false,
+  carSounds: true,
+  voice: false,
 };
 
 export const MAX_PINNED = 6;

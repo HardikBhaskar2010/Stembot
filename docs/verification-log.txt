@@ -553,3 +553,109 @@ $ npm run e2e
   1 skipped
   31 passed (3.4m)
 exit code: 0
+
+######## Firmware v2.1: compass, sounds, clap, voice (2026-11-21T18:58:58Z) ########
+==================================================================
+$ npm run typecheck
+==================================================================
+> stembot-control@0.1.0 typecheck
+> tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.node.json
+exit code: 0
+==================================================================
+$ npm run lint
+==================================================================
+> stembot-control@0.1.0 lint
+> eslint . --max-warnings=0
+exit code: 0
+==================================================================
+$ npm run format:check
+==================================================================
+> stembot-control@0.1.0 format:check
+> prettier --check .
+Checking formatting...
+All matched files use Prettier code style!
+exit code: 0
+==================================================================
+$ npm test
+==================================================================
+> stembot-control@0.1.0 test
+> vitest run
+ RUN  v5.1.1 C:/Users/sneha/Music/stembot
+ Test Files  6 passed (6)
+      Tests  106 passed (106)
+   Start at  00:29:21
+   Duration  2.62s (environment 68%, import 12%, transform 9%, tests 8%, worker 4%)
+exit code: 0
+==================================================================
+$ npm run build
+==================================================================
+> stembot-control@0.1.0 typecheck
+> tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.node.json
+vite v8.3.8 building client environment for production...
+transforming...
+✓ 2209 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/manifest.webmanifest                                   0.55 kB
+dist/index.html                                             4.58 kB │ gzip:   1.44 kB
+dist/assets/chakra-petch-latin-700-normal-CnDBPjkL.woff2    9.90 kB
+dist/assets/chakra-petch-latin-500-normal-BR1ody1F.woff2    9.95 kB
+dist/assets/chakra-petch-latin-600-normal-DVQm9bgb.woff2    9.96 kB
+dist/assets/chakra-petch-latin-700-normal-D1s_c2du.woff    13.33 kB
+dist/assets/chakra-petch-latin-500-normal-CnUQnZ4D.woff    13.40 kB
+dist/assets/chakra-petch-latin-600-normal-DQKfcdKo.woff    13.43 kB
+dist/assets/index-B-VfF5JP.css                             44.05 kB │ gzip:   9.82 kB
+dist/assets/web-DyCgT0gS.js                                 0.84 kB │ gzip:   0.40 kB
+dist/assets/web-Dl8CyjQE.js                                 0.89 kB │ gzip:   0.45 kB
+dist/assets/virtual_pwa-register-Ba9xvDJ8.js                1.12 kB │ gzip:   0.59 kB
+dist/assets/workbox-window.prod.es5-Bd17z0YL.js             5.65 kB │ gzip:   2.20 kB
+dist/assets/web-gCTsPB1p.js                                 7.74 kB │ gzip:   2.29 kB
+dist/assets/esm-DYGiCuO5.js                                 8.86 kB │ gzip:   2.51 kB
+dist/assets/index-DFPlsC10.js                             361.22 kB │ gzip: 111.98 kB
+✓ built in 1.20s
+PWA v2.0.0
+mode      generateSW
+precache  27 entries (629.54 KiB)
+files generated
+  dist/sw.js
+  dist/workbox-2fbc6a65.js
+exit code: 0
+==================================================================
+$ npm run e2e
+==================================================================
+  2) [desktop] › e2e\smoke.spec.ts:5:3 › first run and screens › connect and drive from an empty garage, every main screen renders and passes axe 
+    Error: expect(locator).toContainText(expected) failed
+    Locator: getByRole('table', { name: 'Sent to each car' })
+    Expected substring: "C:2.0,1,1"
+    Received string:    "Sent to each carCarLift stop (i)Obstacle (o)m / kC: replyRocketi0offm1 / k0C:2.1,1,1,1Cometi0offm1 / k0C:2.1,0,1,1"
+    Timeout: 5000ms
+    Call log:
+      - Expect "toContainText" getByRole('table', { name: 'Sent to each car' }) with timeout 5000ms
+      - waiting for getByRole('table', { name: 'Sent to each car' })
+        14 × locator resolved to <table class="dev__table dev__fw">…</table>
+           - unexpected value "Sent to each carCarLift stop (i)Obstacle (o)m / kC: replyRocketi0offm1 / k0C:2.1,1,1,1Cometi0offm1 / k0C:2.1,0,1,1"
+      56 |     const fwTable = page.getByRole('table', { name: 'Sent to each car' });
+      57 |     await expect(fwTable).toContainText('i0');
+    > 58 |     await expect(fwTable).toContainText('C:2.0,1,1'); // Rocket: sensor + horn
+         |                           ^
+      59 |     await expect(fwTable).toContainText('C:2.0,0,1'); // Comet: no distance sensor
+      60 |     await page.waitForTimeout(500);
+      61 |     await shot(page, info, '09-dev-live');
+        at C:\Users\sneha\Music\stembot\e2e\smoke.spec.ts:58:27
+    Error Context: test-results\smoke-first-run-and-screen-49aa8-reen-renders-and-passes-axe-desktop\error-context.md
+    attachment #2: trace (application/zip) ─────────────────────────────────────────────────────────
+    test-results\smoke-first-run-and-screen-49aa8-reen-renders-and-passes-axe-desktop\trace.zip
+    Usage:
+        npx playwright show-trace test-results\smoke-first-run-and-screen-49aa8-reen-renders-and-passes-axe-desktop\trace.zip
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+  2 failed
+    [mobile] › e2e\smoke.spec.ts:5:3 › first run and screens › connect and drive from an empty garage, every main screen renders and passes axe 
+    [desktop] › e2e\smoke.spec.ts:5:3 › first run and screens › connect and drive from an empty garage, every main screen renders and passes axe 
+  1 skipped
+  39 passed (4.1m)
+exit code: 1
+
+$ npx playwright test -g "connect and drive from an empty garage"   (re-run after updating the stale C:2.0 expectation to C:2.1)
+  2 passed
+exit code: 0
+Full e2e result for this change: 39 passed in the full run + the 2 fixed tests = 41/41.

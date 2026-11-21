@@ -6,7 +6,7 @@ import { SPEED_MAX, SPEED_MIN } from '../protocol/constants';
 import { CAR_COLORS, useGarage } from '../store/garage';
 import { useUi } from '../store/ui';
 import { Button, IconButton, Row, Slider, Switch } from './primitives';
-import { LiftStopSwitch, ObstacleStopControl } from './CarOptions';
+import { ClapSwitch, LiftStopSwitch, NorthButton, ObstacleStopControl } from './CarOptions';
 import { useModal } from './useModal';
 
 export function CarEditor() {
@@ -90,6 +90,8 @@ function EditorSheet({ carId, onClose }: { carId: string; onClose: () => void })
           <div className="car-options glass">
             <LiftStopSwitch car={car} withHint />
             <ObstacleStopControl car={car} />
+            <ClapSwitch car={car} withHint />
+            <NorthButton car={car} />
           </div>
           <div className="rows glass">
             <Row

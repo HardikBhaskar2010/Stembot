@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import type { LinkStats } from '../control/CarLink';
-import type { Capabilities, Telemetry } from '../protocol/telemetry';
+import type { Capabilities, Motion, Telemetry } from '../protocol/telemetry';
 import type { TransportErrorCode } from '../transport/types';
 
 export type CarStatus = 'offline' | 'connecting' | 'connected' | 'lost' | 'failed';
@@ -16,7 +16,21 @@ export interface LiveCar {
   stats: LinkStats | null;
   driving: boolean;
   /** What the app last sent for firmware v2 settings on this link (null = not sent yet). */
-  fw: { liftStop: boolean | null; obstacleCm: number | null; sentAt: number | null };
+  fw: {
+    liftStop: boolean | null;
+    obstacleCm: number | null;
+    sentAt: number | null;
+    /** Firmware v2.1 `m` / `k` last sent (undefined = not sent on this link). */
+    carSounds?: boolean;
+    clapMode?: boolean;
+  };
+  /** Firmware v2.1 compass + accelerometer (`M:` lines). */
+  motion: Motion | null;
+  motionAt: number | null;
+  /** When the car last reported a bump (for a brief flash). */
+  bumpAt: number | null;
+  /** Last clap command the car started (`K:` line). */
+  lastClap: { claps: 1 | 2 | 3; at: number } | null;
   /** Raw `C:` reply line, untouched, for dev options. */
   capsRaw: string | null;
 }
@@ -31,6 +45,10 @@ export const EMPTY_LIVE: LiveCar = {
   stats: null,
   driving: false,
   fw: { liftStop: null, obstacleCm: null, sentAt: null },
+  motion: null,
+  motionAt: null,
+  bumpAt: null,
+  lastClap: null,
   capsRaw: null,
 };
 

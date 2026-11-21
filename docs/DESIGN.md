@@ -174,6 +174,11 @@ Voice: short, plain, kind. Say what happened, then what to do. Car names come fr
 | Lifted, Stop when lifted off | Lifted (still drivable) | The wheels keep turning while you drive. | — |
 | Stop when lifted turned off (once) | Stop when lifted is off | A lifted car keeps spinning its wheels while you drive. Keep fingers clear. | Got it |
 | Obstacle stop hint | Obstacle stop | Helps stop the car before it drives into something ahead. It can miss thin legs, corners and soft things. | — |
+| Compass not calibrated | Compass not set up | Press A on the car, then tilt the car until its screen fills. | — |
+| Compass reading | NE 42° | approx. (motors bend the reading) | Set current direction as north (car settings) |
+| Clap mode on | Listening for claps | 1 clap: forward 1 s · 2 claps: turn right · 3 claps: turn around | — |
+| Voice unavailable | Voice commands | This browser can't recognise speech on the device, so voice commands are off. | — |
+| Voice in use | Heard "go forward" | Voice is slower than the STOP button. Use STOP in a hurry. | Hold to talk |
 | No echo | No echo | Nothing in range, or this car has no distance sensor. | — |
 | Power hint | Check batteries | {name} dropped {n} times. Weak batteries cause this. | — |
 | Group drift note | — | Cars can't see each other, so they drift apart over distance. Line them up again now and then. | — |

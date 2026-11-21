@@ -8,6 +8,10 @@ export type MockApi = {
   setLifted(id: string, v: boolean): void;
   drop(id: string): void;
   nextPick(mode: 'auto' | 'cancel' | 'bluetooth-off' | 'permission-denied'): void;
+  firmware(id: string): { liftStop: boolean; obstacleCm: number };
+  clap(id: string, n: 1 | 2 | 3): boolean;
+  calibrate(id: string): void;
+  say(text: string, targets: string[]): unknown;
 };
 
 export const CAR1 = 'mock-zogat';
@@ -56,6 +60,24 @@ export function mock(page: Page) {
       page.evaluate(
         (i) => (window as unknown as { __stembotMock: MockApi }).__stembotMock.drop(i),
         id,
+      ),
+    clap: (id: string, n: 1 | 2 | 3) =>
+      page.evaluate(
+        ([i, c]) =>
+          (window as unknown as { __stembotMock: MockApi }).__stembotMock.clap(
+            i as string,
+            c as 1 | 2 | 3,
+          ),
+        [id, n] as const,
+      ),
+    say: (text: string, targets: string[]) =>
+      page.evaluate(
+        ([t, ids]) =>
+          (window as unknown as { __stembotMock: MockApi }).__stembotMock.say(
+            t as string,
+            ids as string[],
+          ),
+        [text, targets] as const,
       ),
     nextPick: (m: Parameters<MockApi['nextPick']>[0]) =>
       page.evaluate(

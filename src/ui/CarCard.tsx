@@ -8,7 +8,7 @@ import { useSettings } from '../store/settings';
 import { useUi } from '../store/ui';
 import { Bars, Button, IconButton } from './primitives';
 import { formatDistance, MiniEcho } from './Radar';
-import { LiftStopSwitch } from './CarOptions';
+import { ClapSwitch, LiftStopSwitch } from './CarOptions';
 import { StatusChip, useNow } from './shared';
 
 export function CarCard({ car, enterDelay }: { car: SavedCar; enterDelay?: string }) {
@@ -82,6 +82,7 @@ export function CarCard({ car, enterDelay }: { car: SavedCar; enterDelay?: strin
       </dl>
 
       <LiftStopSwitch car={car} />
+      <ClapSwitch car={car} />
 
       <div className="car-card__actions">
         {connected ? (

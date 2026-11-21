@@ -35,6 +35,9 @@ export interface CarLinkOptions {
   now?: () => number;
 }
 
+/** Settings bursts are short (at most ~6 lines on connect); cap the queue anyway. */
+const MAX_CONTROL_QUEUE = 16;
+
 type Desired = { kind: 'stop' } | { kind: 'drive'; dir: Direction; speed: number };
 
 /**
@@ -49,7 +52,10 @@ type Desired = { kind: 'stop' } | { kind: 'drive'; dir: Direction; speed: number
 export class CarLink {
   private desired: Desired = { kind: 'stop' };
   private inFlight = false;
+  /** Newest drive/stop line waiting for the link (newest wins). */
   private pending: string | null = null;
+  /** Settings and other non-drive lines (i, o, m, k, ?, h, l, raw): in order, never dropped. */
+  private control: string[] = [];
   private keepAlive: ReturnType<typeof setInterval> | null = null;
   private pulseTimer: ReturnType<typeof setTimeout> | null = null;
   private blocked = false;
@@ -130,7 +136,7 @@ export class CarLink {
       this.stop();
       return;
     }
-    this.enqueue(encodeCommand(cmd));
+    this.enqueueControl(encodeCommand(cmd));
   }
 
   /** Lifted car or locked controls: stop and refuse drive commands until unblocked. */
@@ -177,6 +183,16 @@ export class CarLink {
   private clearPulse() {
     if (this.pulseTimer) clearTimeout(this.pulseTimer);
     this.pulseTimer = null;
+  }
+
+  /** Non-drive commands queue in order; a burst like i1, o20, m1 must all arrive. */
+  private enqueueControl(line: string) {
+    if (!this.inFlight) {
+      void this.write(line);
+      return;
+    }
+    if (this.control.length >= MAX_CONTROL_QUEUE) this.control.shift();
+    this.control.push(line);
   }
 
   private enqueue(line: string) {
@@ -233,6 +249,17 @@ export class CarLink {
       if (timer) clearTimeout(timer);
       this.inFlight = false;
       if (line === 'x\n' && this.pending !== 'x\n') this.retriedStop = false;
+    }
+    // Order after each write: a waiting STOP first (safety), then queued settings, then drive.
+    if (this.pending === 'x\n') {
+      this.pending = null;
+      void this.write('x\n');
+      return;
+    }
+    const ctl = this.control.shift();
+    if (ctl !== undefined) {
+      void this.write(ctl);
+      return;
     }
     const next = this.pending;
     this.pending = null;

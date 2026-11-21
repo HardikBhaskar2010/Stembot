@@ -21,6 +21,10 @@ export type CarCommand =
   | { kind: 'liftStop'; on: boolean }
   /** Firmware v2 forward obstacle stop: `o<cm>` 10..100, `o0` off (resets on disconnect). */
   | { kind: 'obstacle'; cm: number }
+  /** Firmware v2.1 car sounds: `m1` on (car default), `m0` off (resets on disconnect). */
+  | { kind: 'carSounds'; on: boolean }
+  /** Firmware v2.1 clap commands: `k1` on, `k0` off (car default off, resets on disconnect). */
+  | { kind: 'clapMode'; on: boolean }
   /** Dev options: any printable ASCII string. */
   | { kind: 'raw'; text: string };
 
@@ -93,6 +97,10 @@ export function encodeCommand(cmd: CarCommand, opts: { reversed?: boolean } = {}
       return cmd.on ? 'i1\n' : 'i0\n';
     case 'obstacle':
       return `o${clampObstacle(cmd.cm)}\n`;
+    case 'carSounds':
+      return cmd.on ? 'm1\n' : 'm0\n';
+    case 'clapMode':
+      return cmd.on ? 'k1\n' : 'k0\n';
     case 'raw': {
       const text = cmd.text.replace(/[\r\n]+$/g, '');
       if (!PRINTABLE.test(text))

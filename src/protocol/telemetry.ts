@@ -11,21 +11,39 @@ export interface Telemetry {
   lifted: boolean;
 }
 
-/** Proposed firmware handshake `C:<version>,<hasUltrasonic>,<hasHorn>`. */
+/** Firmware handshake `C:<version>,<hasUltrasonic>,<hasHorn>[,<hasCompass>]` (4th field from v2.1). */
 export interface Capabilities {
   version: string;
   hasUltrasonic: boolean;
   hasHorn: boolean;
+  /** false when the car did not report it (firmware v2.0). */
+  hasCompass: boolean;
+}
+
+/** Firmware v2.1 `M:<heading>,<pitch>,<roll>,<bump>` line (compass + accelerometer). */
+export interface Motion {
+  /** 0..359 degrees, or null until the compass is calibrated on the car (it sends -1). */
+  headingDeg: number | null;
+  /** -180..180 degrees. */
+  pitchDeg: number;
+  rollDeg: number;
+  /** The car felt a jolt since its last M line. */
+  bump: boolean;
 }
 
 export type ParsedLine =
   | { type: 'telemetry'; value: Telemetry }
+  | { type: 'motion'; value: Motion }
+  /** Firmware v2.1 `K:<claps>`: a clap command started on the car. */
+  | { type: 'clap'; value: { claps: 1 | 2 | 3 } }
   | { type: 'capabilities'; value: Capabilities }
   | { type: 'unknown'; raw: string }
   | { type: 'invalid'; raw: string; reason: string };
 
 const TELEMETRY_RE = /^D:(\d{1,4}),([01]),([01]),([01])$/;
-const CAPS_RE = /^C:([0-9A-Za-z.-]{1,8}),([01]),([01])$/;
+const CAPS_RE = /^C:([0-9A-Za-z.-]{1,8}),([01]),([01])(?:,([01]))?$/;
+const MOTION_RE = /^M:(-?\d{1,3}),(-?\d{1,3}),(-?\d{1,3}),([01])$/;
+const CLAP_RE = /^K:([1-3])$/;
 const PRINTABLE = /^[\x20-\x7e]*$/;
 
 export function parseLine(input: string): ParsedLine {
@@ -56,8 +74,40 @@ export function parseLine(input: string): ParsedLine {
     if (!m) return { type: 'invalid', raw, reason: 'bad capability format' };
     return {
       type: 'capabilities',
-      value: { version: m[1] ?? '?', hasUltrasonic: m[2] === '1', hasHorn: m[3] === '1' },
+      value: {
+        version: m[1] ?? '?',
+        hasUltrasonic: m[2] === '1',
+        hasHorn: m[3] === '1',
+        hasCompass: m[4] === '1',
+      },
     };
+  }
+
+  if (raw.startsWith('M:')) {
+    const m = MOTION_RE.exec(raw);
+    if (!m) return { type: 'invalid', raw, reason: 'bad motion format' };
+    const heading = Number(m[1]);
+    const pitch = Number(m[2]);
+    const roll = Number(m[3]);
+    if (heading < -1 || heading > 359)
+      return { type: 'invalid', raw, reason: 'heading out of range' };
+    if (Math.abs(pitch) > 180 || Math.abs(roll) > 180)
+      return { type: 'invalid', raw, reason: 'tilt out of range' };
+    return {
+      type: 'motion',
+      value: {
+        headingDeg: heading < 0 ? null : heading,
+        pitchDeg: pitch,
+        rollDeg: roll,
+        bump: m[4] === '1',
+      },
+    };
+  }
+
+  if (raw.startsWith('K:')) {
+    const m = CLAP_RE.exec(raw);
+    if (!m) return { type: 'invalid', raw, reason: 'bad clap format' };
+    return { type: 'clap', value: { claps: Number(m[1]) as 1 | 2 | 3 } };
   }
 
   return { type: 'unknown', raw };

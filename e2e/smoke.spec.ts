@@ -55,8 +55,8 @@ test.describe('first run and screens', () => {
     await expect(page.getByRole('heading', { name: 'Dev options' })).toBeVisible();
     const fwTable = page.getByRole('table', { name: 'Sent to each car' });
     await expect(fwTable).toContainText('i0');
-    await expect(fwTable).toContainText('C:2.0,1,1'); // Rocket: sensor + horn
-    await expect(fwTable).toContainText('C:2.0,0,1'); // Comet: no distance sensor
+    await expect(fwTable).toContainText('C:2.1,1,1,1'); // Rocket: sensor + horn + compass
+    await expect(fwTable).toContainText('C:2.1,0,1,1'); // Comet: no distance sensor
     await page.waitForTimeout(500);
     await shot(page, info, '09-dev-live');
     await axe(page, info, 'dev');
@@ -372,4 +372,91 @@ test('desktop: keyboard hint shows once, then stays dismissed', async ({ page },
   await page.goto('/?mock=1#/settings');
   await page.goBack();
   await expect(page.getByRole('complementary', { name: 'Keyboard' })).toHaveCount(0);
+});
+
+test.describe('firmware v2.1: compass, clap commands, car sounds, voice', () => {
+  test.beforeEach(async ({ page }) => {
+    await fresh(page);
+    await addCar(page, 'Rocket', 'drive');
+    await expect(page.locator('.radar__num')).toBeVisible({ timeout: 3000 });
+  });
+
+  const carId = (url: string) => decodeURIComponent(url.split('#/drive/')[1] ?? '');
+
+  test('the compass shows a heading that turns with the car', async ({ page }, info) => {
+    const compass = page.getByRole('img', { name: /^Heading / });
+    await expect(compass).toBeVisible({ timeout: 3000 });
+    const before = await compass.getAttribute('aria-label');
+    await page.keyboard.down('d');
+    await page.waitForTimeout(700);
+    await page.keyboard.up('d');
+    await page.waitForTimeout(300);
+    expect(await compass.getAttribute('aria-label')).not.toBe(before);
+    await shot(page, info, '19-drive-compass');
+  });
+
+  test('clap commands: switch sends k1, a clap moves the car and is shown', async ({
+    page,
+  }, info) => {
+    await page.waitForTimeout(400);
+    await page.getByRole('button', { name: 'Edit Rocket' }).click();
+    const sheet = page.getByRole('dialog', { name: 'Rocket' });
+    await sheet.getByRole('switch', { name: 'Clap commands' }).click();
+    await expect(
+      sheet.getByRole('button', { name: 'Set current direction as north' }),
+    ).toBeEnabled();
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(150);
+    expect(await mock(page).received(CAR1)).toContain('k1');
+    await expect(page.getByText('Listening for claps')).toBeVisible();
+
+    expect(await mock(page).clap(CAR1, 1)).toBe(true);
+    await page.waitForTimeout(300);
+    expect(await mock(page).motion(CAR1)).toBe('w');
+    await expect(page.locator('.chip--clap')).toContainText('heard 1 clap: forward');
+    await shot(page, info, '20-drive-clap');
+    // STOP still wins over a clap move
+    await page.keyboard.press('Space');
+    await page.waitForTimeout(200);
+    expect(await mock(page).motion(CAR1)).toBe('x');
+  });
+
+  test('car sounds switch sends m0, and m1 is sent on connect by default', async ({ page }) => {
+    await page.waitForTimeout(400);
+    expect(await mock(page).received(CAR1)).toContain('m1');
+    await page.goto('/?mock=1#/settings');
+    await page.getByRole('switch', { name: 'Car sounds' }).click();
+    await page.waitForTimeout(150);
+    expect(await lastLine(page, CAR1)).toBe('m0');
+  });
+
+  test('voice phrases go through the same command layer (bounded move, stop wins)', async ({
+    page,
+  }) => {
+    const id = carId(page.url());
+    await mock(page).say('go forward', [id]);
+    await page.waitForTimeout(400);
+    expect(await mock(page).motion(CAR1)).toBe('w');
+    await page.waitForTimeout(900); // a voice move lasts 1 s, then stops by itself
+    expect(await mock(page).motion(CAR1)).toBe('x');
+    await mock(page).say('spin left', [id]);
+    await page.waitForTimeout(150);
+    await mock(page).say('stop', [id]);
+    await page.waitForTimeout(150);
+    expect(await lastLine(page, CAR1)).toBe('x');
+    expect(await mock(page).say('unlock', [id])).toBeNull();
+  });
+
+  test('voice is off by default and never probes the browser by itself', async ({ page }) => {
+    // Turning voice on runs the browser's on-device check, which crashes headless Chromium,
+    // so this test only covers the default: no probe, switch off, no mic button.
+    await page.goto('/?mock=1#/settings');
+    await expect(page.getByText('Uses speech recognition on this device only')).toBeVisible();
+    await expect(page.getByRole('switch', { name: 'Voice commands' })).toHaveAttribute(
+      'aria-checked',
+      'false',
+    );
+    await page.goto(page.url().replace('#/settings', '#/'));
+    await expect(page.getByRole('button', { name: /Hold to talk/ })).toHaveCount(0);
+  });
 });

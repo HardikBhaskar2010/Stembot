@@ -10,6 +10,9 @@ import {
   disconnectCar,
   hold,
   release,
+  setCarSounds,
+  setClapMode,
+  setNorthHere,
   setObstacleStop,
   setStopWhenLifted,
   stopAll,
@@ -94,11 +97,12 @@ describe('firmware v2 settings on connect', () => {
     const car = addMockCar(CAR_A, 'Rocket');
     await connect(car);
     await vi.advanceTimersByTimeAsync(100);
-    expect(useLive.getState().cars[car.id]?.capsRaw).toBe('C:2.0,1,1');
+    expect(useLive.getState().cars[car.id]?.capsRaw).toBe('C:2.1,1,1,1');
     expect(useGarage.getState().cars[0]?.caps).toEqual({
-      version: '2.0',
+      version: '2.1',
       hasUltrasonic: true,
       hasHorn: true,
+      hasCompass: true,
     });
   });
 
@@ -195,7 +199,10 @@ describe('per-car lift logic', () => {
     await vi.advanceTimersByTimeAsync(100);
     const lines = mock.receivedLines(CAR_A);
     expect(lines).toContain('i1');
-    expect(lines.at(-1)).toBe('x');
+    // The stop is sent (ahead of i1 if both are waiting) and nothing drives after it.
+    const lastStop = lines.lastIndexOf('x');
+    expect(lastStop).toBeGreaterThan(-1);
+    expect(lines.slice(lastStop).some((l) => /^[wsad]/.test(l))).toBe(false);
     expect(mock.motionOf(CAR_A)).toBe('x');
   });
 
@@ -260,5 +267,71 @@ describe('one-time notice', () => {
       state: { cars: SavedCar[] };
     };
     expect(stored.state.cars.find((c) => c.id === a.id)?.stopWhenLifted).toBe(true);
+  });
+});
+
+describe('firmware v2.1 settings', () => {
+  it('sends m1 after connect by default, k1 only when clap mode is on', async () => {
+    const car = addMockCar(CAR_A, 'Rocket');
+    const from = mock.receivedLines(CAR_A).length;
+    await connect(car);
+    await vi.advanceTimersByTimeAsync(320);
+    const lines = linesSince(CAR_A, from);
+    expect(lines).toContain('m1');
+    expect(lines).not.toContain('k1');
+    expect(lines.indexOf('x')).toBeLessThan(lines.indexOf('m1'));
+  });
+
+  it('re-sends m0 and k1 after a reconnect when the user set them', async () => {
+    const car = addMockCar(CAR_A, 'Rocket');
+    setCarSounds(false);
+    setClapMode(car.id, true);
+    await connect(car);
+    await vi.advanceTimersByTimeAsync(320);
+    mock.dropConnection(CAR_A);
+    const from = mock.receivedLines(CAR_A).length;
+    await connect(car);
+    await vi.advanceTimersByTimeAsync(320);
+    const lines = linesSince(CAR_A, from);
+    expect(lines).toContain('m0');
+    expect(lines).toContain('k1');
+    expect(useLive.getState().cars[car.id]?.fw.clapMode).toBe(true);
+    setCarSounds(true);
+  });
+
+  it('a clap on the car starts a bounded move and is reported to the app', async () => {
+    const car = addMockCar(CAR_A, 'Rocket');
+    setClapMode(car.id, true);
+    await connect(car);
+    await vi.advanceTimersByTimeAsync(320);
+    expect(mock.clap(CAR_A, 1)).toBe(true);
+    await vi.advanceTimersByTimeAsync(200);
+    expect(mock.motionOf(CAR_A)).toBe('w');
+    expect(useLive.getState().cars[car.id]?.lastClap?.claps).toBe(1);
+    // the app's STOP still wins over a clap move
+    stopAll('button');
+    await vi.advanceTimersByTimeAsync(200);
+    expect(mock.motionOf(CAR_A)).toBe('x');
+  });
+
+  it('reports heading from M lines and sets a per-car north offset', async () => {
+    const car = addMockCar(CAR_A, 'Rocket');
+    await connect(car);
+    await vi.advanceTimersByTimeAsync(400);
+    const heading = useLive.getState().cars[car.id]?.motion?.headingDeg;
+    expect(typeof heading).toBe('number');
+    expect(setNorthHere(car.id)).toBe(true);
+    expect(useGarage.getState().cars[0]?.headingOffset).toBe(heading);
+  });
+
+  it('an uncalibrated compass reports no heading and cannot set north', async () => {
+    const car = addMockCar(CAR_B, 'Comet'); // mock-gizop starts uncalibrated
+    await connect(car);
+    await vi.advanceTimersByTimeAsync(400);
+    expect(useLive.getState().cars[car.id]?.motion?.headingDeg).toBeNull();
+    expect(setNorthHere(car.id)).toBe(false);
+    mock.calibrateCompass(CAR_B);
+    await vi.advanceTimersByTimeAsync(400);
+    expect(typeof useLive.getState().cars[car.id]?.motion?.headingDeg).toBe('number');
   });
 });

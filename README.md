@@ -63,6 +63,13 @@ npm run cap:ios
 
 Then pick your team under Signing & Capabilities and run on a real iPhone (Bluetooth does not work in the simulator). `Info.plist` already has `NSBluetoothAlwaysUsageDescription`. Deployment target iOS 15.
 
+## Firmware v2.1 features
+
+- **Compass**: press A on the car to calibrate, then Drive shows the heading (approximate; DC motors bend it). Set "north" per car in its settings.
+- **Car sounds**: boot, connect, bump and more on the built-in speaker only (never on a wheel pin). Settings → Car sounds mutes them.
+- **Clap commands** (per car, off by default): 1 clap forward 1 s, 2 claps turn right, 3 claps turn around. One microphone can't tell direction, so the car can't follow a sound.
+- **Voice commands** (off by default): push-to-talk on Drive, on-device recognition only; hidden where the browser can't do it. Not available in the native apps yet (the Capacitor speech plugin can't force on-device).
+
 ## Icons and motion
 
 - App icon: `public/logo.svg` and every PNG come from `scripts/icons.mjs` (`npm run icons`); native Android/iOS icons and splash screens: `npm run icons:native` (uses `@capacitor/assets`).

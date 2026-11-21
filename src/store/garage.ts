@@ -37,7 +37,11 @@ export interface SavedCar {
   /** Firmware v2 `o<cm>`; 0 = off. */
   obstacleCm: number;
   /** Last capability reply from the car (persisted so per-car options can be hidden offline). */
-  caps: { version: string; hasUltrasonic: boolean; hasHorn: boolean } | null;
+  caps: { version: string; hasUltrasonic: boolean; hasHorn: boolean; hasCompass?: boolean } | null;
+  /** Firmware v2.1 clap commands (`k1`/`k0`). Off by default. */
+  clapMode: boolean;
+  /** Compass reading that this car calls north (the micro:bit's mounting is unknown). */
+  headingOffset: number;
 }
 
 interface GarageState {
@@ -101,6 +105,8 @@ export const useGarage = create<GarageState>()(
           lastSeenAt: null,
           drops: [],
           stopWhenLifted: false,
+          clapMode: false,
+          headingOffset: 0,
           obstacleCm: 0,
           caps: null,
         };
@@ -164,6 +170,11 @@ function withV2Defaults(c: SavedCar): SavedCar {
     ...c,
     stopWhenLifted: typeof raw.stopWhenLifted === 'boolean' ? raw.stopWhenLifted : false,
     obstacleCm: clampObstacle(typeof raw.obstacleCm === 'number' ? raw.obstacleCm : 0),
+    clapMode: typeof raw.clapMode === 'boolean' ? raw.clapMode : false,
+    headingOffset:
+      typeof raw.headingOffset === 'number' && raw.headingOffset >= 0 && raw.headingOffset < 360
+        ? Math.round(raw.headingOffset)
+        : 0,
     caps:
       caps &&
       typeof caps === 'object' &&
@@ -173,6 +184,11 @@ function withV2Defaults(c: SavedCar): SavedCar {
         ? caps
         : null,
   };
+}
+
+/** Compass options only for cars whose firmware reports a compass (v2.1+). */
+export function hasCompass(car: SavedCar): boolean {
+  return car.caps?.hasCompass === true;
 }
 
 /** Obstacle stop needs a distance sensor; hide it only when the car says it has none. */

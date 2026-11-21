@@ -56,3 +56,17 @@ Write down pass/fail and the phone/browser model for each line.
 ## F. PWA install and offline
 
 31. [ ] Chrome: install the app (address-bar install icon). Turn on airplane mode except Bluetooth, open the installed app: it loads and drives.
+
+## G. Firmware v2.1 (compass, sounds, claps). Flash v2.1 to both boards first
+
+32. [ ] MakeCode: paste `stembot_fw_boardA.ts` into a project with the Bluetooth extension; it compiles. Same for Board B. (Not compiled by me: no MakeCode toolchain here.)
+33. [ ] **Wheels off the ground.** Power on: boot sound from the built-in speaker; **no wheel twitches** during any sound (connect, honk, locate, bump). If a wheel twitches, stop and report: audio is reaching a pin.
+34. [ ] Connect: link-up chirp. Switch the app off: link-lost sound, wheels stopped.
+35. [ ] Settings → Car sounds off: no event sounds; Honk still plays. Reconnect: still muted (the app re-sends `m0`).
+36. [ ] Compass: Drive shows "Compass not set up". Press **A**, tilt the car until the screen fills: motors stay off throughout, success sound, Drive shows a heading. Spin the car: the dial follows.
+37. [ ] Compass accuracy with motors running: note how far the heading jumps when the wheels spin (motor magnets). Use "Set current direction as north" in the car's settings.
+38. [ ] Bump: push the car into a soft obstacle at Normal speed: thud sound, phone buzzes, radar flashes "Bump!". Tune `BUMP_MG` (2200) if it fires on normal driving or never fires.
+39. [ ] Clap commands on (car settings): chirp. One clap: forward ~1 s and stop. Two: turn right (~90° if the compass is calibrated, timed otherwise). Three: turn around. Tune `CLAP_LEVEL` (150) for the room.
+40. [ ] Clap safety: lift the car during a clap move: it stops. Clap toward a wall: it stops at ~25 cm (Board A). App STOP and button B end a clap move. Disconnect: clap mode is off after reconnect unless the switch is on.
+41. [ ] Motor noise and the car's own sounds must not count as claps (drive with clap mode on; no unexpected moves).
+42. [ ] Voice (Chrome/Edge desktop with on-device speech): Settings → Voice commands on. If it offers a download, download the English pack. Hold "Hold to talk", say "forward": the car moves ~1 s. Say "stop" mid-move: it stops as you say it. On browsers without on-device speech, the switch explains and stays off.

@@ -14,7 +14,7 @@
         { "key": "Cross-Origin-Opener-Policy", "value": "same-origin" },
         {
           "key": "Permissions-Policy",
-          "value": "bluetooth=(self), accelerometer=(self), camera=(), microphone=(), geolocation=()"
+          "value": "bluetooth=(self), accelerometer=(self), microphone=(self), camera=(), geolocation=()"
         }
       ]
     },

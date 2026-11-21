@@ -23,10 +23,10 @@ describe('parseLine', () => {
     expect(parseLine('D:40,0,1,0\r').type).toBe('telemetry');
   });
 
-  it('parses the proposed capability line', () => {
+  it('parses the v2.0 capability line (no compass field)', () => {
     expect(parseLine('C:2.0,1,0')).toEqual({
       type: 'capabilities',
-      value: { version: '2.0', hasUltrasonic: true, hasHorn: false },
+      value: { version: '2.0', hasUltrasonic: true, hasHorn: false, hasCompass: false },
     });
   });
 

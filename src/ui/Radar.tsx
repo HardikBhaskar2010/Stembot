@@ -1,4 +1,5 @@
 import { ArrowUpFromLine, Radar as RadarIcon } from 'lucide-react';
+import type { ReactNode } from 'react';
 import { t } from '../i18n/en';
 import { ZONE_CLOSE_CM, ZONE_VERY_CLOSE_CM } from '../protocol/constants';
 import type { Units } from '../store/settings';
@@ -44,12 +45,18 @@ export function Radar({
   units,
   carName,
   compact = false,
+  overlay,
+  bump = false,
 }: {
   state: RadarState;
   distanceCm: number | null;
   units: Units;
   carName?: string;
   compact?: boolean;
+  /** Corner content (compass, clap status). */
+  overlay?: ReactNode;
+  /** The car just reported a jolt: brief flash. */
+  bump?: boolean;
 }) {
   const live = state === 'live' && distanceCm !== null;
   const zone: Zone = live ? zoneOf(distanceCm) : 'clear';
@@ -58,7 +65,7 @@ export function Radar({
 
   return (
     <section
-      className={`radar radar--${state} radar--${zone} ${compact ? 'radar--compact' : ''}`}
+      className={`radar radar--${state} radar--${zone} ${compact ? 'radar--compact' : ''} ${bump ? 'radar--bump' : ''}`}
       aria-label={carName ? `${t('radar.label')}, ${carName}` : t('radar.label')}
     >
       <svg viewBox={`0 0 ${W} 222`} className="radar__svg" aria-hidden="true" focusable="false">
@@ -125,6 +132,12 @@ export function Radar({
         <rect x={CX - 22} y={CY - 10} width="44" height="22" rx="11" className="radar__car" />
       </svg>
 
+      {overlay && <div className="radar__overlay">{overlay}</div>}
+      {bump && (
+        <span className="radar__bump" aria-hidden="true">
+          {t('compass.bump')}
+        </span>
+      )}
       <div className="radar__readout" aria-live="off">
         {state === 'lifted-drivable' ? (
           <div className="radar__status radar__status--lifted-drivable">

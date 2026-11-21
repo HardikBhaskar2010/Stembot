@@ -238,4 +238,28 @@ describe('CarLink', () => {
     const gaps = times.slice(1).map((t, i) => t - times[i]!);
     expect(Math.max(...gaps)).toBeLessThan(250);
   });
+
+  it('never drops settings commands sent in a burst (i, o, m, k all arrive, in order)', async () => {
+    const f = fakeWriter(20);
+    const link = new CarLink(f.w, { reversed: () => false });
+    link.stop();
+    link.send({ kind: 'liftStop', on: true });
+    link.send({ kind: 'obstacle', cm: 20 });
+    link.send({ kind: 'carSounds', on: false });
+    link.send({ kind: 'clapMode', on: true });
+    await vi.advanceTimersByTimeAsync(300);
+    expect(f.lines).toEqual(['x\n', 'i1\n', 'o20\n', 'm0\n', 'k1\n']);
+    expect(link.stats.superseded).toBe(0);
+  });
+
+  it('a stop jumps ahead of queued settings', async () => {
+    const f = fakeWriter(20);
+    const link = new CarLink(f.w, { reversed: () => false });
+    link.hold('forward', 500); // in flight
+    link.send({ kind: 'liftStop', on: true });
+    link.send({ kind: 'obstacle', cm: 30 });
+    link.stop();
+    await vi.advanceTimersByTimeAsync(300);
+    expect(f.lines).toEqual(['w500\n', 'x\n', 'i1\n', 'o30\n']);
+  });
 });

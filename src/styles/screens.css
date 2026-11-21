@@ -302,7 +302,8 @@
     'stop stop'
     'speed speed'
     'left quick'
-    'tools tools';
+    'tools tools'
+    'voice voice';
   align-items: center;
 }
 
@@ -1387,4 +1388,177 @@
 
 .brand__mark {
   border-radius: 11px;
+}
+
+/* ================= Firmware v2.1: compass, clap, bump, voice ================= */
+.radar__overlay {
+  position: absolute;
+  top: var(--s-3);
+  left: var(--s-3);
+  right: var(--s-3);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--s-2);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.compass {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  padding: 4px var(--s-3) 4px 4px;
+  border-radius: var(--r-control);
+  background: rgb(26 18 14 / 0.72);
+  box-shadow: inset 0 0 0 1px rgb(244 236 225 / 0.06);
+  max-width: 100%;
+}
+
+.compass__text {
+  display: grid;
+  line-height: 1.2;
+  min-width: 0;
+}
+
+.compass__text strong {
+  font-family: var(--font-display);
+  font-weight: 600;
+  color: var(--ink-hi);
+  font-size: var(--fs-sm);
+}
+
+.compass__text span {
+  font-size: var(--fs-xs);
+  color: var(--ink-dim);
+}
+
+.compass--off .compass__text strong {
+  color: var(--ink);
+}
+
+.compass__ring {
+  fill: rgb(244 236 225 / 0.04);
+  stroke: var(--line-strong);
+  stroke-width: 1.25;
+}
+
+.compass__tick {
+  stroke: var(--line-strong);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+}
+
+.compass__tick--n {
+  stroke: var(--caramel-hi);
+}
+
+.compass__n {
+  fill: var(--ink-dim);
+  font-family: var(--font-display);
+  font-size: 7px;
+  font-weight: 700;
+  text-anchor: middle;
+}
+
+.compass__needle {
+  fill: var(--signal);
+  transform-box: view-box;
+  transform-origin: 24px 24px;
+  /* Moving on screen: ease-in-out, quick enough to keep up with ~7 readings a second. */
+  transition: transform var(--t-base) var(--ease-in-out);
+}
+
+.chip--clap {
+  color: var(--caramel-hi);
+  background: rgb(26 18 14 / 0.72);
+}
+
+/* Bump: one brief flash of the radar face, then gone (state feedback, not decoration). */
+.radar__bump {
+  position: absolute;
+  left: 50%;
+  top: 42%;
+  transform: translate(-50%, -50%);
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: var(--fs-lg);
+  color: var(--caution);
+  pointer-events: none;
+  animation: bump-pop 600ms var(--ease-out) both;
+}
+
+.radar--bump {
+  box-shadow:
+    inset 0 0 0 2px rgb(255 181 71 / 0.55),
+    inset 0 1px 0 rgb(255 255 255 / 0.06);
+  transition: box-shadow var(--t-base) ease;
+}
+
+@keyframes bump-pop {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(var(--scale-from));
+  }
+  20% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+.fleet__heading {
+  color: var(--ink-dim);
+}
+
+/* Voice: push-to-talk under the quick commands. */
+.voice {
+  display: grid;
+  gap: var(--s-2);
+  justify-items: center;
+}
+
+.voice__btn {
+  width: 100%;
+  max-width: 320px;
+}
+
+.voice__btn--on {
+  background: linear-gradient(180deg, rgb(var(--signal-rgb) / 0.32), rgb(var(--signal-rgb) / 0.18));
+  color: var(--ink-hi);
+}
+
+.voice__status {
+  font-size: var(--fs-xs);
+  color: var(--ink-dim);
+  text-align: center;
+  min-height: 1.2em;
+}
+
+.deck__right .voice {
+  grid-area: voice;
+}
+
+@media (orientation: landscape) and (min-width: 640px), (min-width: 1024px) {
+  .deck__right .voice {
+    grid-area: auto;
+  }
+}
+
+/* Right column must never be wider than its track (1024 px desktops overflowed sideways). */
+.deck__right,
+.deck__right > * {
+  min-width: 0;
+}
+
+.deck__tools {
+  flex-wrap: wrap;
+}
+
+.deck__tools .btn {
+  flex: 1 1 140px;
+  min-width: 0;
 }

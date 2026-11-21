@@ -121,6 +121,7 @@ function FirmwareStateTable() {
           <th scope="col">{t('dev.car')}</th>
           <th scope="col">{t('dev.fwLift')}</th>
           <th scope="col">{t('dev.fwObstacle')}</th>
+          <th scope="col">m / k</th>
           <th scope="col">{t('dev.fwCaps')}</th>
         </tr>
       </thead>
@@ -140,6 +141,11 @@ function FirmwareStateTable() {
                   : fw.obstacleCm > 0
                     ? `o${fw.obstacleCm}`
                     : t('dev.fwOff')}
+              </td>
+              <td className="dev__mono">
+                {fw?.carSounds === undefined ? '-' : fw.carSounds ? 'm1' : 'm0'}
+                {' / '}
+                {fw?.clapMode === undefined ? '-' : fw.clapMode ? 'k1' : 'k0'}
               </td>
               <td className="dev__mono">{l?.capsRaw ?? t('dev.fwNoReply')}</td>
             </tr>
@@ -177,7 +183,12 @@ function LivePanel({ carId }: { carId: string }) {
         <h3 className="dev__h">Parsed</h3>
         <pre className="dev__pre" tabIndex={0} aria-label="Parsed telemetry">
           {JSON.stringify(
-            { telemetry: l?.telemetry ?? null, capabilities: l?.capabilities ?? null },
+            {
+              telemetry: l?.telemetry ?? null,
+              motion: l?.motion ?? null,
+              lastClap: l?.lastClap ?? null,
+              capabilities: l?.capabilities ?? null,
+            },
             null,
             2,
           )}

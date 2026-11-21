@@ -10,6 +10,7 @@ import { useSettings } from '../store/settings';
 import { useUi } from '../store/ui';
 import { DriveDeck } from '../ui/DriveDeck';
 import { Button, IconButton, Slider, Switch } from '../ui/primitives';
+import { cardinal, relativeHeading } from '../ui/Compass';
 import { formatDistance } from '../ui/Radar';
 
 export function Group() {
@@ -115,6 +116,8 @@ function FleetRow({
   const status = l?.status ?? 'offline';
   const lifted = status === 'connected' && Boolean(l?.telemetry?.lifted);
   const cm = l?.telemetry?.distanceCm ?? null;
+  const raw = status === 'connected' ? (l?.motion?.headingDeg ?? null) : null;
+  const heading = raw === null ? null : relativeHeading(raw, car.headingOffset);
   const d = cm !== null ? formatDistance(cm, units) : null;
   const liftStops = car.stopWhenLifted;
   const problem = status === 'lost' || status === 'failed' || (lifted && liftStops);
@@ -141,6 +144,12 @@ function FleetRow({
                 ? `${d.value} ${d.unit}`
                 : t('radar.noEcho')
               : t(`status.${status}`)}
+          {heading !== null && (
+            <span className="fleet__heading num">
+              {' · '}
+              {cardinal(heading)} {heading}°
+            </span>
+          )}
         </span>
       </div>
       <Switch

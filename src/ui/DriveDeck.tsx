@@ -12,6 +12,7 @@ import { useUi } from '../store/ui';
 import { ArrowPad, Joystick } from './DriveControls';
 import { Button, IconButton, Segmented } from './primitives';
 import { LockButton, StopAllButton } from './shared';
+import { VoiceButton } from './VoiceButton';
 
 /**
  * Shared control surface for Drive (one car) and Group (ticked cars).
@@ -115,6 +116,7 @@ export function DriveDeck({
             {t('common.commands')}
           </Button>
         </div>
+        <VoiceButton targets={targets} />
       </div>
       <KeyboardHint />
     </div>

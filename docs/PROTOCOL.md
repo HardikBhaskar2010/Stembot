@@ -1,6 +1,6 @@
 # STEMBOT car protocol (app side)
 
-Source of truth: firmware v2.0 (`stembot_fw_boardA.ts`, `stembot_fw_boardB.ts` in the repo root) and the GATT log from the real car (Nov 2026). Code: `src/protocol/`.
+Source of truth: firmware v2.1 (`stembot_fw_boardA.ts`, `stembot_fw_boardB.ts` in the repo root) and the GATT log from the real car (Nov 2026). Code: `src/protocol/`.
 
 ## Link
 
@@ -28,6 +28,8 @@ One command per write, ending in `\n`, at most 20 bytes.
 | `h`, `l` | honk, locate | only if the car answered `?` with `hasHorn=1` |
 | `i1` / `i0` | lift-off stop on / off. **Car default off** (a lifted car keeps driving). Resets to off on disconnect | ~300 ms after the first `x` of every (re)connect, and when the user flips the car's "Stop when lifted" |
 | `o<cm>` / `o0` | forward obstacle stop at 10–100 cm / off. Resets on disconnect | after (re)connect only if the user set it; `o0` when the user turns it off |
+| `m1` / `m0` | car sounds on / off (v2.1, car default on, resets on disconnect) | after every (re)connect, and when Settings → Car sounds changes |
+| `k1` / `k0` | clap commands on / off (v2.1, default off, resets on disconnect) | after (re)connect if the car's Clap commands switch is on, and when it changes |
 
 Unknown letters are ignored by the car and do not refresh its watchdog (firmware v2, verified in source).
 
@@ -61,3 +63,17 @@ Parsing (`src/protocol/telemetry.ts`): lines are reassembled across BLE chunks, 
 3. Dev options → Live data → "Sent to each car" shows the last `i`/`o` sent per car and the raw `C:` reply.
 
 Per board (from the firmware files): Board A `FLIP = false`, `HAS_ULTRASONIC = 1`; Board B `FLIP = true`, `HAS_ULTRASONIC = 0`. With firmware `FLIP` set, keep the app's "Reverse wheels" off for that car, or they cancel out. Obstacle stop is hidden in the app for cars that report `hasUltrasonic = 0`.
+
+## Firmware v2.1 additions
+
+| Line (car → app) | Meaning | App handling |
+|---|---|---|
+| `C:<ver>,<us>,<horn>,<compass>` | 4th field = has compass (v2.1). 3-field replies still accepted | compass and clap options appear only for cars that report a compass |
+| `M:<heading>,<pitch>,<roll>,<bump>` | ~6.7 Hz. heading 0–359 or `-1` (not calibrated: press A on the car); pitch/roll −180..180; bump 1 = jolt since the last line | compass dial on Drive (per-car "north" offset), heading per car in Group, bump = haptic + radar flash |
+| `K:<claps>` | a clap command started on the car (1 = forward 1 s, 2 = turn right 90°, 3 = turn around) | "heard N claps" chip on Drive, screen-reader announcement |
+
+Command queue rule (`CarLink`): drive and stop lines are newest-wins; settings lines (`i o m k ? h l` and dev raw) queue in order and are never dropped; a waiting stop is always written first. (Before v2.1 a burst like `i1 o20 m1` could lose `o20`; caught by a unit test.)
+
+Car buttons: **A** = calibrate compass (motors held off; the firmware never reads the heading before this, because MakeCode's `compassHeading()` starts the calibration game by itself). **B** = emergency stop.
+
+Sound: firmware v2.1 calls `pins.setAudioPinEnabled(false)` and `music.setBuiltInSpeakerEnabled(true)` (verified in the pxt-microbit source) so tones play on the built-in speaker only and never on P0 (a wheel pin) or P1/P2 (ultrasonic).

@@ -66,10 +66,20 @@ function sendFirmwareSettings(s: Session) {
   if (sessions.get(s.carId) !== s) return;
   const c = car(s.carId);
   if (!c) return;
+  const carSounds = useSettings.getState().carSounds;
   s.link.send({ kind: 'liftStop', on: c.stopWhenLifted });
   if (c.obstacleCm > 0) s.link.send({ kind: 'obstacle', cm: c.obstacleCm });
+  // Firmware v2.1 (older firmware ignores unknown letters): car sounds and clap mode.
+  s.link.send({ kind: 'carSounds', on: carSounds });
+  if (c.clapMode) s.link.send({ kind: 'clapMode', on: true });
   useLive.getState().patch(s.carId, {
-    fw: { liftStop: c.stopWhenLifted, obstacleCm: c.obstacleCm, sentAt: Date.now() },
+    fw: {
+      liftStop: c.stopWhenLifted,
+      obstacleCm: c.obstacleCm,
+      sentAt: Date.now(),
+      carSounds,
+      clapMode: c.clapMode,
+    },
   });
 }
 
@@ -123,6 +133,26 @@ function onLine(s: Session, line: string) {
       text: line,
       json: JSON.stringify(parsed.value),
     });
+  } else if (parsed.type === 'motion') {
+    const now = Date.now();
+    live.patch(s.carId, {
+      motion: parsed.value,
+      motionAt: now,
+      ...(parsed.value.bump ? { bumpAt: now } : {}),
+    });
+    if (parsed.value.bump) haptic('press');
+    if (log.enabled)
+      log.add({
+        t: now,
+        carId: s.carId,
+        dir: 'rx',
+        text: line,
+        json: JSON.stringify(parsed.value),
+      });
+  } else if (parsed.type === 'clap') {
+    live.patch(s.carId, { lastClap: { claps: parsed.value.claps, at: Date.now() } });
+    useNotify.getState().announce(t(`clap.heard${parsed.value.claps}`, { name }));
+    log.add({ t: Date.now(), carId: s.carId, dir: 'rx', text: line });
   } else if (parsed.type === 'invalid') {
     log.add({
       t: Date.now(),
@@ -254,6 +284,10 @@ export async function openSession(c: SavedCar): Promise<void> {
     rxTimes: [],
     capabilities: null,
     capsRaw: null,
+    motion: null,
+    motionAt: null,
+    bumpAt: null,
+    lastClap: null,
     fw: { liftStop: null, obstacleCm: null, sentAt: null },
   });
   useDevLog
@@ -383,6 +417,40 @@ export function setObstacleStop(carId: string, cm: number): void {
       fw: { liftStop: fw?.liftStop ?? null, obstacleCm: saved, sentAt: Date.now() },
     });
   }
+}
+
+/** Firmware v2.1 car sounds for every car (`m1`/`m0`); re-sent after each reconnect. */
+export function setCarSounds(on: boolean): void {
+  useSettings.getState().set('carSounds', on);
+  for (const s of sessions.values()) {
+    s.link.send({ kind: 'carSounds', on });
+    const fw = useLive.getState().cars[s.carId]?.fw;
+    if (fw) useLive.getState().patch(s.carId, { fw: { ...fw, carSounds: on, sentAt: Date.now() } });
+  }
+}
+
+/** Firmware v2.1 clap commands for one car (`k1`/`k0`); re-sent after each reconnect. */
+export function setClapMode(carId: string, on: boolean): void {
+  useGarage.getState().updateCar(carId, { clapMode: on });
+  const s = sessions.get(carId);
+  if (!s) return;
+  s.link.send({ kind: 'clapMode', on });
+  const fw = useLive.getState().cars[carId]?.fw;
+  if (fw) useLive.getState().patch(carId, { fw: { ...fw, clapMode: on, sentAt: Date.now() } });
+}
+
+/** Make the car's current compass reading this car's "north" (mounting is unknown). */
+export function setNorthHere(carId: string): boolean {
+  const heading = useLive.getState().cars[carId]?.motion?.headingDeg;
+  if (heading == null) return false;
+  useGarage.getState().updateCar(carId, { headingOffset: heading });
+  return true;
+}
+
+/** Voice moves: a bounded drive, then stop. Say it again to keep going. */
+export function voiceMove(carIds: string[], dir: Direction, ms: number): void {
+  if (useLive.getState().locked) return;
+  for (const id of carIds) sessions.get(id)?.link.pulse(dir, speedFor(id), ms);
 }
 
 export function honk(carIds: string[]): void {

@@ -1,5 +1,7 @@
 import { useSettings } from './store/settings';
 import { getMockTransport } from './transport';
+import { runVoiceAction } from './voice/dispatch';
+import { matchVoice } from './voice/phrases';
 
 /**
  * Lets the Playwright smoke test (and a developer in the console) drive the mock cars:
@@ -20,6 +22,14 @@ export function exposeTestHooks(): void {
     setLifted: (id: string, v: boolean) => mock.setLifted(id, v),
     drop: (id: string) => mock.dropConnection(id),
     firmware: (id: string) => mock.firmwareStateOf(id),
+    clap: (id: string, n: 1 | 2 | 3) => mock.clap(id, n),
+    calibrate: (id: string) => mock.calibrateCompass(id),
+    /** Feed a transcript through the voice matcher and command layer (no microphone needed). */
+    say: (text: string, targets: string[]) => {
+      const action = matchVoice(text);
+      if (action) runVoiceAction(action, targets);
+      return action;
+    },
     nextPick: (mode: 'auto' | 'cancel' | 'bluetooth-off' | 'permission-denied') => {
       mock.nextPick = mode;
     },
