@@ -55,8 +55,8 @@ test.describe('first run and screens', () => {
     await expect(page.getByRole('heading', { name: 'Dev options' })).toBeVisible();
     const fwTable = page.getByRole('table', { name: 'Sent to each car' });
     await expect(fwTable).toContainText('i0');
-    await expect(fwTable).toContainText('C:2.2,1,1,1'); // Rocket: sensor + horn + compass
-    await expect(fwTable).toContainText('C:2.2,0,1,1'); // Comet: no distance sensor
+    await expect(fwTable).toContainText('C:2.3,1,1,1,1'); // Rocket: sensor + horn + compass
+    await expect(fwTable).toContainText('C:2.3,0,1,1,0'); // Comet: no distance sensor
     await page.waitForTimeout(500);
     await shot(page, info, '09-dev-live');
     await axe(page, info, 'dev');
@@ -478,4 +478,22 @@ test.describe('firmware v2.2: heading-hold steps', () => {
     await shot(page, info, '21-drive-step');
     expect(await mock(page).motion(CAR1)).toBe('x');
   });
+});
+
+test('firmware v2.3: no Clap commands switch for a car whose microphone is off', async ({
+  page,
+}) => {
+  await fresh(page);
+  await addCar(page, 'Rocket', 'garage'); // mock-zogat: microphone on
+  await addCar(page, 'Comet', 'garage'); // mock-pevit: microphone off (USE_MIC = 0)
+  await page.waitForTimeout(600);
+  await page.getByRole('button', { name: 'Edit Comet' }).click();
+  const sheet = page.getByRole('dialog', { name: 'Comet' });
+  await expect(sheet.getByRole('switch', { name: 'Stop when lifted' })).toBeVisible();
+  await expect(sheet.getByRole('switch', { name: 'Clap commands' })).toHaveCount(0);
+  await page.keyboard.press('Escape');
+  await page.getByRole('button', { name: 'Edit Rocket' }).click();
+  await expect(
+    page.getByRole('dialog', { name: 'Rocket' }).getByRole('switch', { name: 'Clap commands' }),
+  ).toBeVisible();
 });

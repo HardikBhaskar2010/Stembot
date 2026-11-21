@@ -7,13 +7,35 @@ describe('firmware v2.1 lines', () => {
   it('parses the 4-field capability reply and still accepts the 3-field one', () => {
     expect(parseLine('C:2.1,1,1,1')).toEqual({
       type: 'capabilities',
-      value: { version: '2.1', hasUltrasonic: true, hasHorn: true, hasCompass: true },
+      value: { version: '2.1', hasUltrasonic: true, hasHorn: true, hasCompass: true, hasMic: true },
     });
     expect(parseLine('C:2.0,0,1')).toEqual({
       type: 'capabilities',
-      value: { version: '2.0', hasUltrasonic: false, hasHorn: true, hasCompass: false },
+      value: {
+        version: '2.0',
+        hasUltrasonic: false,
+        hasHorn: true,
+        hasCompass: false,
+        hasMic: false,
+      },
     });
     expect(parseLine('C:2.1,1,1,2').type).toBe('invalid');
+  });
+
+  it('parses the v2.3 5-field reply: microphone off', () => {
+    expect(parseLine('C:2.3,1,1,1,0')).toEqual({
+      type: 'capabilities',
+      value: {
+        version: '2.3',
+        hasUltrasonic: true,
+        hasHorn: true,
+        hasCompass: true,
+        hasMic: false,
+      },
+    });
+    expect(parseLine('C:2.3,1,0,1,1').type).toBe('capabilities');
+    expect(parseLine('C:2.3,1,1,1,2').type).toBe('invalid');
+    expect(parseLine('C:2.3,1,1,1,0,0').type).toBe('invalid');
   });
 
   it('parses motion lines; heading -1 means not calibrated', () => {

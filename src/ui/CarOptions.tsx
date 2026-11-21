@@ -3,7 +3,7 @@ import { Compass } from 'lucide-react';
 import { setClapMode, setNorthHere, setObstacleStop, setStopWhenLifted } from '../control/fleet';
 import { t } from '../i18n/en';
 import { OBSTACLE_CHOICES } from '../protocol/constants';
-import { canUseObstacleStop, hasCompass, type SavedCar } from '../store/garage';
+import { canUseObstacleStop, hasCompass, hasMic, type SavedCar } from '../store/garage';
 import { useLive } from '../store/live';
 import { useNotify } from '../store/notify';
 import { Button, Segmented, Switch } from './primitives';
@@ -64,11 +64,11 @@ export function ObstacleStopControl({ car }: { car: SavedCar }) {
 
 /**
  * Clap commands (firmware v2.1 `k1`/`k0`): the car listens with its own microphone.
- * Shown once the car has reported firmware v2.1 (it reports a compass).
+ * Shown only when the car reports its microphone is on (firmware USE_MIC = 1).
  */
 export function ClapSwitch({ car, withHint = false }: { car: SavedCar; withHint?: boolean }) {
   const id = useId();
-  if (!hasCompass(car)) return null;
+  if (!hasMic(car)) return null;
   return (
     <div className="car-option">
       <div className="car-option__text">

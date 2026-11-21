@@ -26,7 +26,13 @@ describe('parseLine', () => {
   it('parses the v2.0 capability line (no compass field)', () => {
     expect(parseLine('C:2.0,1,0')).toEqual({
       type: 'capabilities',
-      value: { version: '2.0', hasUltrasonic: true, hasHorn: false, hasCompass: false },
+      value: {
+        version: '2.0',
+        hasUltrasonic: true,
+        hasHorn: false,
+        hasCompass: false,
+        hasMic: false,
+      },
     });
   });
 

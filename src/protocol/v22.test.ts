@@ -43,6 +43,7 @@ describe('firmware v2.2: steps and runtime wheel flip', () => {
       hasUltrasonic: true,
       hasHorn: true,
       hasCompass: true,
+      hasMic: false,
     });
     expect(firmwareAtLeast(caps('2.2'), 2.2)).toBe(true);
     expect(firmwareAtLeast(caps('2.10'), 2.2)).toBe(false); // "2.10" parses as 2.1: be conservative

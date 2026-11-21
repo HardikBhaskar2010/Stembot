@@ -67,7 +67,7 @@ Then pick your team under Signing & Capabilities and run on a real iPhone (Bluet
 
 - **Compass**: press A on the car to calibrate, then Drive shows the heading (approximate; DC motors bend it). Set "north" per car in its settings.
 - **Car sounds**: boot, connect, bump and more on the built-in speaker only (never on a wheel pin). Settings → Car sounds mutes them.
-- **Clap commands** (per car, off by default): 1 clap forward 1 s, 2 claps turn right, 3 claps turn around. One microphone can't tell direction, so the car can't follow a sound.
+- **Clap commands** (off in firmware v2.3: the microphone is disabled after a Bluetooth panic 070; set `USE_MIC = 1` to try again): 1 clap forward 1 s, 2 claps turn right, 3 claps turn around. One microphone can't tell direction, so the car can't follow a sound.
 - **Steps** (v2.2): Step forward / Step back move about 10 cm in a straight line, holding the compass heading so the car doesn't swirl on slopes. Distance comes from the ultrasonic when something is in range, otherwise from time.
 - **Voice commands** (off by default): push-to-talk on Drive, on-device recognition only; hidden where the browser can't do it. Not available in the native apps yet (the Capacitor speech plugin can't force on-device).
 

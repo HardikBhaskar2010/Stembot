@@ -119,7 +119,7 @@ export function Drive({ carId }: { carId: string }) {
                     {stepMessage(car.name, live.lastStep.movedCm, live.lastStep.why)}
                   </span>
                 )}
-                {connected && car.clapMode && (
+                {connected && car.clapMode && car.caps?.hasMic === true && (
                   <span className="chip chip--clap">
                     {live.lastClap && now - live.lastClap.at < 2500
                       ? t(`clap.heard${live.lastClap.claps}`, { name: car.name })

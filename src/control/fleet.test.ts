@@ -100,12 +100,13 @@ describe('firmware v2 settings on connect', () => {
     const car = addMockCar(CAR_A, 'Rocket');
     await connect(car);
     await vi.advanceTimersByTimeAsync(100);
-    expect(useLive.getState().cars[car.id]?.capsRaw).toBe('C:2.2,1,1,1');
+    expect(useLive.getState().cars[car.id]?.capsRaw).toBe('C:2.3,1,1,1,1');
     expect(useGarage.getState().cars[0]?.caps).toEqual({
-      version: '2.2',
+      version: '2.3',
       hasUltrasonic: true,
       hasHorn: true,
       hasCompass: true,
+      hasMic: true,
     });
   });
 
@@ -404,5 +405,20 @@ describe('firmware v2.2: heading-hold steps and firmware wheel flip', () => {
     step([car.id], 'forward');
     await vi.advanceTimersByTimeAsync(300);
     expect(linesSince('mock-tuvog', from).some((l) => l.startsWith('f'))).toBe(false);
+  });
+});
+
+describe('firmware v2.3: microphone off', () => {
+  it('a car without a microphone never gets k1, even if Clap commands was saved on', async () => {
+    const car = addMockCar(CAR_B, 'Comet'); // mock-gizop reports hasMic = 0
+    useGarage.getState().updateCar(car.id, { clapMode: true });
+    await connect(car);
+    await vi.advanceTimersByTimeAsync(700); // caps first, then settings
+    mock.dropConnection(CAR_B);
+    const from = mock.receivedLines(CAR_B).length;
+    await connect(car);
+    await vi.advanceTimersByTimeAsync(700);
+    expect(useLive.getState().cars[car.id]?.capabilities?.hasMic).toBe(false);
+    expect(linesSince(CAR_B, from)).not.toContain('k1');
   });
 });

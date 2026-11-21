@@ -1,4 +1,7 @@
-// STEMBOT firmware v2.2, Bluetooth UART. Newest command wins.
+// STEMBOT firmware v2.3, Bluetooth UART. Newest command wins.
+// v2.3: microphone OFF (USE_MIC = 0) after panic 070 on boot. 070 = Bluetooth radio firmware
+// assert; the micro:bit runtime's audio code can disable interrupts while Bluetooth advertises
+// (CODAL issue #506). If 070 still appears, set USE_SOUND = 0 as well.
 // BOARD: Board A (first car, normal wheel direction)
 // Right: P8 fwd / P0 back. Left: P16 fwd / P15 back.
 // Ultrasonic: TRIG P1, ECHO P2. Bottom IR: left P14, right P13 (reads 1 = no floor).
@@ -10,8 +13,8 @@
 //   o<cm>  forward obstacle stop at <cm> (10-100), o0 = off
 //   i1 / i0  lift-off stop on / off (default OFF: the car drives even when lifted)
 //   m1 / m0  car sounds on / off (default ON)
-//   k1 / k0  clap commands on / off (default OFF): 1 clap = forward 1 s,
-//            2 claps = turn right 90 degrees, 3 claps = turn around
+//   k1 / k0  clap commands on / off (default OFF; ignored when USE_MIC = 0): 1 clap =
+//            forward 1 s, 2 claps = turn right 90 degrees, 3 claps = turn around
 //   f<cm>[,<speed>] / b<cm>[,<speed>]  step forward / back about <cm> (1-100, default 10)
 //            holding the compass heading (straight on slopes); distance from the
 //            ultrasonic when something is in range, otherwise estimated from time
@@ -20,7 +23,7 @@
 // Out, about every 150 ms each:
 //   "D:<cm>,<irL>,<irR>,<air>"            (cm 0 = no echo, air 1 = lifted)
 //   "M:<heading>,<pitch>,<roll>,<bump>"   (heading -1 until the compass is calibrated)
-// Out on events: "C:<version>,<hasUltrasonic>,<hasHorn>,<hasCompass>" on "?",
+// Out on events: "C:<version>,<hasUltrasonic>,<hasHorn>,<hasCompass>,<hasMic>" on "?",
 //                "K:<claps>" when a clap command starts,
 //                "S:<cm moved>,<why>" when a step ends: d done, o obstacle, l lifted,
 //                t time cap, x cancelled by a command / STOP / link loss.
@@ -35,9 +38,11 @@ pins.digitalWritePin(DigitalPin.P16, 0)
 // ---- per-board settings -------------------------------------------------
 const FLIP = false               // true = reverse both wheels (wheels wired the other way)
 const HAS_ULTRASONIC = 1       // 1 if this car has a working ultrasonic sensor, else 0
-const HAS_HORN = 1                  // micro:bit V2 has a built-in speaker
+const USE_SOUND = 1                 // 1 = car sounds and honk; 0 = silent (if panic 070 persists)
+const USE_MIC = 0                   // 1 = clap commands (microphone); 0 = microphone never started
+const HAS_HORN = USE_SOUND          // honk needs sound
 const HAS_COMPASS = 1               // micro:bit V2 has a compass (magnetometer)
-const FW_VERSION = "2.2"
+const FW_VERSION = "2.3"
 // -------------------------------------------------------------------------
 
 const TRIG = DigitalPin.P1
@@ -111,7 +116,7 @@ const SND_HONK = [523, 120, 659, 160]
 // Plays in the background so the motor loop and the UART handler never block.
 // force: play even when car sounds are muted (honk is an explicit request).
 function sfx(notes: number[], force: boolean) {
-    if (busyFx || (!soundOn && !force)) {
+    if (!USE_SOUND || busyFx || (!soundOn && !force)) {
         return
     }
     busyFx = true
@@ -320,7 +325,7 @@ function showLinkIcon() {
 
 function sendCapabilities() {
     // "C:2.1,1,1,1\n" is 12 bytes, under the 20-byte limit
-    bluetooth.uartWriteString("C:" + FW_VERSION + "," + HAS_ULTRASONIC + "," + HAS_HORN + "," + HAS_COMPASS + "\n")
+    bluetooth.uartWriteString("C:" + FW_VERSION + "," + HAS_ULTRASONIC + "," + HAS_HORN + "," + HAS_COMPASS + "," + USE_MIC + "\n")
 }
 
 function honk() {
@@ -336,7 +341,11 @@ function locate() {
     control.inBackground(function () {
         for (let i = 0; i < 3; i++) {
             basic.showIcon(IconNames.Target, 0)
-            music.playTone(880, 100)
+            if (USE_SOUND) {
+                music.playTone(880, 100)
+            } else {
+                basic.pause(100)
+            }
             basic.clearScreen()
             basic.pause(120)
         }
@@ -379,10 +388,14 @@ function startClapMove(n: number) {
 stopAll()
 // Sound goes to the built-in speaker only, never to an edge-connector pin:
 // P0 is a wheel pin and P1/P2 are the ultrasonic pins (pins.setAudioPinEnabled, V2 only).
-pins.setAudioPinEnabled(false)
-music.setBuiltInSpeakerEnabled(true)
-music.setVolume(150)
-input.setSoundThreshold(SoundThreshold.Loud, CLAP_LEVEL)
+if (USE_SOUND) {
+    pins.setAudioPinEnabled(false)
+    music.setBuiltInSpeakerEnabled(true)
+    music.setVolume(150)
+}
+if (USE_MIC) {
+    input.setSoundThreshold(SoundThreshold.Loud, CLAP_LEVEL)   // starts the microphone
+}
 pins.setPull(DigitalPin.P14, PinPullMode.PullNone)
 pins.setPull(DigitalPin.P13, PinPullMode.PullNone)
 pins.analogSetPeriod(AnalogPin.P0, 1000)
@@ -484,7 +497,7 @@ bluetooth.onUartDataReceived(serial.delimiters(Delimiters.NewLine), function () 
     } else if (c == "m") {
         soundOn = on
     } else if (c == "k") {
-        clapMode = on
+        clapMode = on && USE_MIC == 1
         cancelAuto()
         quietUntil = control.millis() + 400
         if (on) {
@@ -505,21 +518,24 @@ bluetooth.onUartDataReceived(serial.delimiters(Delimiters.NewLine), function () 
 })
 
 // Claps: count loud sounds in a short window; the loop starts the move when it closes.
-input.onSound(DetectedSound.Loud, function () {
-    let now = control.millis()
-    if (!clapMode || calibrating || autoCmd != "x" || cmd != "x" || now < quietUntil) {
-        return
-    }
-    if (now - lastClapAt < 120) {
-        return               // one clap rings for a moment: count it once
-    }
-    lastClapAt = now
-    if (clapCount == 0) {
-        clapWindowEnd = now + CLAP_WINDOW_MS
-    }
-    clapCount = Math.min(3, clapCount + 1)
-    sfx(SND_CLAP_ACK, false)
-})
+// Registered only with USE_MIC = 1 (registering it starts the microphone).
+if (USE_MIC) {
+    input.onSound(DetectedSound.Loud, function () {
+        let now = control.millis()
+        if (!clapMode || calibrating || autoCmd != "x" || cmd != "x" || now < quietUntil) {
+            return
+        }
+        if (now - lastClapAt < 120) {
+            return               // one clap rings for a moment: count it once
+        }
+        lastClapAt = now
+        if (clapCount == 0) {
+            clapWindowEnd = now + CLAP_WINDOW_MS
+        }
+        clapCount = Math.min(3, clapCount + 1)
+        sfx(SND_CLAP_ACK, false)
+    })
+}
 
 // One loop: read sensors, enforce cutoffs and watchdog, apply newest command, send telemetry.
 basic.forever(function () {

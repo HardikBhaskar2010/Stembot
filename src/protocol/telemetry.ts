@@ -18,6 +18,8 @@ export interface Capabilities {
   hasHorn: boolean;
   /** false when the car did not report it (firmware v2.0). */
   hasCompass: boolean;
+  /** Microphone in use (clap commands). 5th field from v2.3; v2.1/v2.2 always had it on. */
+  hasMic: boolean;
 }
 
 /** Firmware v2.1 `M:<heading>,<pitch>,<roll>,<bump>` line (compass + accelerometer). */
@@ -51,7 +53,7 @@ export type ParsedLine =
   | { type: 'invalid'; raw: string; reason: string };
 
 const TELEMETRY_RE = /^D:(\d{1,4}),([01]),([01]),([01])$/;
-const CAPS_RE = /^C:([0-9A-Za-z.-]{1,8}),([01]),([01])(?:,([01]))?$/;
+const CAPS_RE = /^C:([0-9A-Za-z.-]{1,8}),([01]),([01])(?:,([01])(?:,([01]))?)?$/;
 const MOTION_RE = /^M:(-?\d{1,3}),(-?\d{1,3}),(-?\d{1,3}),([01])$/;
 const CLAP_RE = /^K:([1-3])$/;
 const STEP_RE = /^S:(\d{1,3}),([doltx])$/;
@@ -90,6 +92,7 @@ export function parseLine(input: string): ParsedLine {
         hasUltrasonic: m[2] === '1',
         hasHorn: m[3] === '1',
         hasCompass: m[4] === '1',
+        hasMic: m[5] !== undefined ? m[5] === '1' : m[4] === '1',
       },
     };
   }

@@ -309,7 +309,10 @@ export class MockTransport implements CarTransport {
         sim.clapMode = arg === 1;
         sim.autoCmd = 'x';
       } else if (letter === '?' && profile.newFirmware) {
-        this.send(sim, `C:2.2,${profile.hasUltrasonic ? 1 : 0},1,1\n`);
+        this.send(
+          sim,
+          `C:2.3,${profile.hasUltrasonic ? 1 : 0},1,1,${profile.id === 'mock-zogat' ? 1 : 0}\n`,
+        );
       }
     }
   }

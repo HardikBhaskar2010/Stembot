@@ -80,3 +80,10 @@ Write down pass/fail and the phone/browser model for each line.
 47. [ ] Step toward a wall from 15 cm: it stops at about 10 cm with "something ahead".
 48. [ ] Lift the car during a step: it stops ("lifted"). Press STOP or button B during a step: it stops ("cancelled").
 49. [ ] Reverse wheels on a v2.2 car: Dev options shows `r1`; forward is forward; Step forward goes forward; obstacle stop still watches the front. Board B (FLIP compiled): leave Reverse wheels **off**.
+
+## I. Firmware v2.3 (microphone off). Flash v2.3 to both boards first
+
+50. [ ] Create a **new** project in the current MakeCode editor, add the Bluetooth extension, Project Settings → No Pairing Required, paste the board's file, download. Boot: short boot tune, no sad face.
+51. [ ] Connect from the app and drive for a minute, honk a few times. No 070.
+52. [ ] If 070 still appears: set `USE_SOUND = 0`, reflash, repeat. Report which setting fixed it.
+53. [ ] The car's settings in the app no longer show "Clap commands" (the car reports no microphone).

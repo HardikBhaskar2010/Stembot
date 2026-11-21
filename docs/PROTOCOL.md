@@ -1,6 +1,6 @@
 # STEMBOT car protocol (app side)
 
-Source of truth: firmware v2.2 (`stembot_fw_boardA.ts`, `stembot_fw_boardB.ts` in the repo root) and the GATT log from the real car (Nov 2026). Code: `src/protocol/`.
+Source of truth: firmware v2.3 (`stembot_fw_boardA.ts`, `stembot_fw_boardB.ts` in the repo root) and the GATT log from the real car (Nov 2026). Code: `src/protocol/`.
 
 ## Link
 
@@ -87,3 +87,12 @@ Sound: firmware v2.1 calls `pins.setAudioPinEnabled(false)` and `music.setBuiltI
 **Runtime wheel flip** (`r`): before v2.2 the app's "Reverse wheels" swapped letters on the phone, so the firmware never knew and its forward-only logic (obstacle stop, steps) looked the wrong way on such cars. From v2.2 the app sends `r1` instead and stops swapping, so every sensor rule works in the car's real directions. The app decides from the live `C:` reply only, never from saved data, so an older car can never end up unswapped. Board B already has `FLIP = true` compiled; leave its Reverse wheels off.
 
 Both boards now have `HAS_ULTRASONIC = 1` (owner, Nov 22 2026).
+
+## Firmware v2.3: microphone off, panic 070
+
+On the cars, v2.1/v2.2 showed a sad face, a long beep and **070** at boot. CODAL panic 70 is `DEVICE_CPU_SDK`, raised only by the Bluetooth manager: a **SoftDevice assert** (the Nordic Bluetooth radio firmware missed its timing). Known cause: the micro:bit runtime's audio output code disables interrupts while Bluetooth advertises (open or paired), tracked in CODAL issue #506 / pxt-microbit #6629. The fix is in runtime v0.3.5, which current MakeCode (v9.x) builds with, but the CODAL team noted other code paths may need the same fix.
+
+v2.3 therefore:
+- `USE_MIC = 0`: the microphone is never started (`input.setSoundThreshold` / `input.onSound` are not called). `k` is ignored. The `C:` reply gains a 5th field, hasMic (`C:2.3,1,1,1,0`), and the app hides Clap commands for cars that report 0.
+- `USE_SOUND = 1`: sounds stay on. **If 070 still appears, set `USE_SOUND = 0`** (no tones at all, honk reported as unavailable) and reflash.
+- Build with the current MakeCode editor (makecode.microbit.org); an old project may be pinned to an older editor/runtime.

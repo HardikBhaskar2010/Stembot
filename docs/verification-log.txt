@@ -760,3 +760,104 @@ $ npm run e2e
   1 skipped
   43 passed (4.1m)
 exit code: 0
+
+######## Firmware v2.3: microphone off (2026-11-21T20:01:48Z) ########
+==================================================================
+$ npm run typecheck
+==================================================================
+> stembot-control@0.1.0 typecheck
+> tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.node.json
+exit code: 0
+==================================================================
+$ npm run lint
+==================================================================
+> stembot-control@0.1.0 lint
+> eslint . --max-warnings=0
+exit code: 0
+==================================================================
+$ npm run format:check
+==================================================================
+> stembot-control@0.1.0 format:check
+> prettier --check .
+Checking formatting...
+All matched files use Prettier code style!
+exit code: 0
+==================================================================
+$ npm test
+==================================================================
+> stembot-control@0.1.0 test
+> vitest run
+ RUN  v5.1.1 C:/Users/sneha/Music/stembot
+ Test Files  7 passed (7)
+      Tests  125 passed (125)
+   Start at  01:32:25
+   Duration  4.15s (environment 68%, import 12%, tests 9%, transform 6%, worker 4%)
+exit code: 0
+==================================================================
+$ npm run build
+==================================================================
+> stembot-control@0.1.0 typecheck
+> tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.node.json
+vite v8.3.8 building client environment for production...
+transforming...
+✓ 2209 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/manifest.webmanifest                                   0.55 kB
+dist/index.html                                             4.58 kB │ gzip:   1.44 kB
+dist/assets/chakra-petch-latin-700-normal-CnDBPjkL.woff2    9.90 kB
+dist/assets/chakra-petch-latin-500-normal-BR1ody1F.woff2    9.95 kB
+dist/assets/chakra-petch-latin-600-normal-DVQm9bgb.woff2    9.96 kB
+dist/assets/chakra-petch-latin-700-normal-D1s_c2du.woff    13.33 kB
+dist/assets/chakra-petch-latin-500-normal-CnUQnZ4D.woff    13.40 kB
+dist/assets/chakra-petch-latin-600-normal-DQKfcdKo.woff    13.43 kB
+dist/assets/index-DoeddGKT.css                             44.20 kB │ gzip:   9.85 kB
+dist/assets/web-BeWnF0ud.js                                 0.84 kB │ gzip:   0.40 kB
+dist/assets/web-DIqhIksr.js                                 0.89 kB │ gzip:   0.45 kB
+dist/assets/virtual_pwa-register-CopYHAP3.js                1.12 kB │ gzip:   0.59 kB
+dist/assets/workbox-window.prod.es5-Bd17z0YL.js             5.65 kB │ gzip:   2.20 kB
+dist/assets/web-9vYDqyNH.js                                 7.74 kB │ gzip:   2.28 kB
+dist/assets/esm-zMochn3r.js                                 8.86 kB │ gzip:   2.51 kB
+dist/assets/index-BU4CrfDw.js                             365.69 kB │ gzip: 113.29 kB
+✓ built in 1.58s
+PWA v2.0.0
+mode      generateSW
+precache  27 entries (634.04 KiB)
+files generated
+  dist/sw.js
+  dist/workbox-2fbc6a65.js
+exit code: 0
+==================================================================
+$ npm run e2e
+==================================================================
+  ok 19 [mobile] › e2e\smoke.spec.ts:424:3 › firmware v2.1: compass, clap commands, car sounds, voice › car sounds switch sends m0, and m1 is sent on connect by default (4.9s)
+  ok 20 [mobile] › e2e\smoke.spec.ts:433:3 › firmware v2.1: compass, clap commands, car sounds, voice › voice phrases go through the same command layer (bounded move, stop wins) (4.9s)
+  ok 21 [mobile] › e2e\smoke.spec.ts:450:3 › firmware v2.1: compass, clap commands, car sounds, voice › voice is off by default and never probes the browser by itself (3.3s)
+  ok 22 [mobile] › e2e\smoke.spec.ts:465:3 › firmware v2.2: heading-hold steps › Step forward quick command moves about 10 cm and shows the result (6.1s)
+  ok 23 [mobile] › e2e\smoke.spec.ts:483:1 › firmware v2.3: no Clap commands switch for a car whose microphone is off (5.4s)
+  ok 24 [desktop] › e2e\smoke.spec.ts:5:3 › first run and screens › connect and drive from an empty garage, every main screen renders and passes axe (23.1s)
+  ok 25 [desktop] › e2e\smoke.spec.ts:73:3 › first run and screens › add-car problems: cancelled chooser, Bluetooth off, permission denied, already added (11.2s)
+  ok 26 [desktop] › e2e\smoke.spec.ts:110:3 › first run and screens › unsupported browser shows the alternative (576ms)
+  ok 27 [desktop] › e2e\smoke.spec.ts:130:3 › safety: every way out sends stop › keyboard: hold W drives with keep-alive, release sends x (4.4s)
+  ok 28 [desktop] › e2e\smoke.spec.ts:143:3 › safety: every way out sends stop › joystick: drag up drives, letting go sends x (4.3s)
+  ok 29 [desktop] › e2e\smoke.spec.ts:158:3 › safety: every way out sends stop › window blur while driving sends x (4.2s)
+  ok 30 [desktop] › e2e\smoke.spec.ts:170:3 › safety: every way out sends stop › switching tabs (visibility hidden) sends x (3.8s)
+  ok 31 [desktop] › e2e\smoke.spec.ts:183:3 › safety: every way out sends stop › Space and the giant STOP stop the car (4.1s)
+  ok 32 [desktop] › e2e\smoke.spec.ts:199:3 › safety: every way out sends stop › Stop when lifted off (default): a lifted car shows a calm state and still drives (4.9s)
+  ok 33 [desktop] › e2e\smoke.spec.ts:215:3 › safety: every way out sends stop › Stop when lifted on: sends i1, a lifted car stops and refuses to drive (6.7s)
+  ok 34 [desktop] › e2e\smoke.spec.ts:248:3 › safety: every way out sends stop › losing the link stops, tells the user in plain words, and offers reconnect (5.4s)
+  ok 35 [desktop] › e2e\smoke.spec.ts:262:3 › safety: every way out sends stop › arrow keys inside the speed selector change speed, not direction (3.6s)
+  ok 36 [desktop] › e2e\smoke.spec.ts:275:3 › safety: every way out sends stop › lock controls blocks driving but never blocks STOP (4.1s)
+  ok 37 [desktop] › e2e\smoke.spec.ts:288:3 › group drive › one control drives every ticked car; one failing car never blocks the others (8.9s)
+  ok 38 [desktop] › e2e\smoke.spec.ts:347:3 › group drive › reverse wheels swaps w/s for that car only (4.9s)
+  ok 39 [desktop] › e2e\smoke.spec.ts:362:1 › desktop: keyboard hint shows once, then stays dismissed (4.2s)
+  ok 40 [desktop] › e2e\smoke.spec.ts:386:3 › firmware v2.1: compass, clap commands, car sounds, voice › the compass shows a heading that turns with the car (5.0s)
+  ok 41 [desktop] › e2e\smoke.spec.ts:398:3 › firmware v2.1: compass, clap commands, car sounds, voice › clap commands: switch sends k1, a clap moves the car and is shown (5.9s)
+  ok 42 [desktop] › e2e\smoke.spec.ts:424:3 › firmware v2.1: compass, clap commands, car sounds, voice › car sounds switch sends m0, and m1 is sent on connect by default (3.9s)
+  ok 43 [desktop] › e2e\smoke.spec.ts:433:3 › firmware v2.1: compass, clap commands, car sounds, voice › voice phrases go through the same command layer (bounded move, stop wins) (4.9s)
+  ok 44 [desktop] › e2e\smoke.spec.ts:450:3 › firmware v2.1: compass, clap commands, car sounds, voice › voice is off by default and never probes the browser by itself (3.3s)
+  ok 45 [desktop] › e2e\smoke.spec.ts:465:3 › firmware v2.2: heading-hold steps › Step forward quick command moves about 10 cm and shows the result (5.0s)
+  ok 46 [desktop] › e2e\smoke.spec.ts:483:1 › firmware v2.3: no Clap commands switch for a car whose microphone is off (5.5s)
+  1 skipped
+  45 passed (4.9m)
+exit code: 0

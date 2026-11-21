@@ -86,7 +86,8 @@ function sendFirmwareSettings(s: Session) {
   if (c.obstacleCm > 0) s.link.send({ kind: 'obstacle', cm: c.obstacleCm });
   // Firmware v2.1 (older firmware ignores unknown letters): car sounds and clap mode.
   s.link.send({ kind: 'carSounds', on: carSounds });
-  if (c.clapMode) s.link.send({ kind: 'clapMode', on: true });
+  const micOn = useLive.getState().cars[s.carId]?.capabilities?.hasMic ?? c.caps?.hasMic ?? false;
+  if (c.clapMode && micOn) s.link.send({ kind: 'clapMode', on: true });
   if (firmwareFlips(s.carId)) s.link.send({ kind: 'wheelFlip', on: c.reversed });
   useLive.getState().patch(s.carId, {
     fw: {
