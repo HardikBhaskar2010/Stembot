@@ -1,0 +1,8 @@
+# Keep LF in the repo on every OS (gradlew must stay LF for macOS/Linux builds).
+* text=auto eol=lf
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.png binary
+*.ico binary
+*.jar binary
+*.woff2 binary

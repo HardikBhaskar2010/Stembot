@@ -1,0 +1,102 @@
+/* STEMBOT Control design tokens. Source: docs/DESIGN.md section 5. */
+:root {
+  /* Owner palette (Nov 21, 2026) */
+  --void: #1a120e;
+  --hull-1: #221813;
+  --hull-2: #2c1e16;
+  --hull-3: #3a2418;
+  --hull-4: #6b4a2e;
+  --line: #4a4a46;
+  --line-strong: #8a7560;
+  --ink-hi: #f4ece1;
+  --ink: #d5c4ae;
+  --ink-dim: #b39b80;
+  --caramel: #a88462;
+  --caramel-hi: #d9a877;
+
+  /* Signal + state */
+  --signal: #3ee6ff;
+  --signal-ink: #0b1418;
+  --signal-rgb: 62 230 255;
+  --caramel-rgb: 168 132 98;
+  --go: #5fe3a1;
+  --caution: #ffb547;
+  --danger: #ff6b6b;
+  --stop: #c8202f;
+  --stop-hi: #e02a3a;
+
+  /* Type */
+  --font-display: 'Chakra Petch', system-ui, sans-serif;
+  --font-body: system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  --font-mono: ui-monospace, 'Cascadia Mono', 'SF Mono', Menlo, Consolas, monospace;
+  --fs-xs: 0.75rem;
+  --fs-sm: 0.875rem;
+  --fs-md: 1rem;
+  --fs-lg: 1.2rem;
+  --fs-xl: 1.44rem;
+  --fs-2xl: 1.73rem;
+  --fs-3xl: 2.07rem;
+  --fs-readout: 3rem;
+
+  /* Space (spacious: base 8) */
+  --s-1: 4px;
+  --s-2: 8px;
+  --s-3: 12px;
+  --s-4: 16px;
+  --s-5: 24px;
+  --s-6: 32px;
+  --s-7: 48px;
+  --s-8: 64px;
+  --s-9: 96px;
+  --gutter: 24px;
+
+  /* Shape */
+  --r-control: 999px;
+  --r-card: 28px;
+  --r-sheet: 32px;
+  --r-field: 16px;
+
+  /* Glass */
+  --glass-blur: 24px;
+  --glass-fill-top: rgb(244 236 225 / 0.085);
+  --glass-fill-bottom: rgb(244 236 225 / 0.035);
+  --glass-edge-hi: rgb(255 255 255 / 0.16);
+  --glass-edge-lo: rgb(0 0 0 / 0.32);
+  --glass-rim: rgb(244 236 225 / 0.07);
+  --glass-shadow: 0 24px 60px -20px rgb(0 0 0 / 0.65);
+
+  /* Motion */
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --t-fast: 120ms;
+  --t-base: 160ms;
+  --t-screen: 180ms;
+  --t-lens: 220ms;
+
+  /* Targets */
+  --target: 48px;
+  --target-drive: 72px;
+}
+
+@media (min-width: 1024px) {
+  :root {
+    --gutter: 48px;
+  }
+}
+
+:root[data-glass='subtle'] {
+  --glass-blur: 12px;
+}
+
+:root[data-glass='off'] {
+  --glass-blur: 0px;
+  --glass-fill-top: var(--hull-2);
+  --glass-fill-bottom: var(--hull-1);
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  :root:not([data-glass='full']) {
+    --glass-blur: 0px;
+    --glass-fill-top: var(--hull-2);
+    --glass-fill-bottom: var(--hull-1);
+  }
+}

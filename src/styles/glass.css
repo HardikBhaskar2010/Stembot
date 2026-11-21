@@ -1,0 +1,89 @@
+/*
+ * Liquid Glass for the web. Rules adapted from the liquid-glass-design skill (SwiftUI):
+ * glass blurs what is behind it, has a specular rim, reacts to touch only when interactive,
+ * siblings share one container, and is never used for STOP.
+ */
+.glass {
+  position: relative;
+  isolation: isolate;
+  background: linear-gradient(180deg, var(--glass-fill-top), var(--glass-fill-bottom));
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(160%);
+  backdrop-filter: blur(var(--glass-blur)) saturate(160%);
+  box-shadow:
+    inset 0 1px 0 var(--glass-edge-hi),
+    inset 0 -1px 0 var(--glass-edge-lo),
+    inset 0 0 0 1px var(--glass-rim),
+    var(--glass-shadow);
+}
+
+/* Tints for prominence (SwiftUI .tint()) */
+.glass--signal {
+  background: linear-gradient(180deg, rgb(var(--signal-rgb) / 0.3), rgb(var(--signal-rgb) / 0.16));
+  box-shadow:
+    inset 0 1px 0 rgb(200 250 255 / 0.45),
+    inset 0 -1px 0 var(--glass-edge-lo),
+    inset 0 0 0 1px rgb(var(--signal-rgb) / 0.35),
+    0 18px 40px -16px rgb(var(--signal-rgb) / 0.35);
+}
+
+.glass--caramel {
+  background: linear-gradient(
+    180deg,
+    rgb(var(--caramel-rgb) / 0.34),
+    rgb(var(--caramel-rgb) / 0.16)
+  );
+  box-shadow:
+    inset 0 1px 0 rgb(255 236 210 / 0.35),
+    inset 0 -1px 0 var(--glass-edge-lo),
+    inset 0 0 0 1px rgb(var(--caramel-rgb) / 0.45),
+    var(--glass-shadow);
+}
+
+/* Interactive glass (SwiftUI .interactive()): a highlight follows the pointer, a press squashes. */
+.glass-i {
+  transition:
+    transform var(--t-fast) var(--ease-out),
+    background-color var(--t-base) var(--ease-out);
+}
+
+.glass-i::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: -1;
+  opacity: 0;
+  transition: opacity var(--t-base) var(--ease-out);
+  background: radial-gradient(
+    120px circle at var(--mx, 50%) var(--my, 30%),
+    rgb(255 255 255 / 0.14),
+    transparent 70%
+  );
+}
+
+@media (hover: hover) {
+  .glass-i:hover::before {
+    opacity: 1;
+  }
+}
+
+.glass-i:active:not(:disabled),
+.glass-i[data-pressed='true'] {
+  transform: scale(0.97);
+}
+
+.glass-i[data-pressed='true']::before {
+  opacity: 1;
+}
+
+:root[data-glass='subtle'] .glass-i::before,
+:root[data-glass='off'] .glass-i::before {
+  display: none;
+}
+
+:root[data-glass='off'] .glass,
+:root[data-glass='off'] .glass--signal,
+:root[data-glass='off'] .glass--caramel {
+  box-shadow: inset 0 0 0 1px var(--line);
+}

@@ -1,0 +1,12 @@
+dist
+android
+ios
+node_modules
+coverage
+playwright-report
+test-results
+docs/screenshots
+.claude
+dev-dist
+public
+*.md

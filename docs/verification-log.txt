@@ -1,0 +1,252 @@
+==================================================================
+$ npm install     (2026-11-20T23:00:26Z)
+==================================================================
+up to date, audited 592 packages in 10s
+164 packages are looking for funding
+  run `npm fund` for details
+4 moderate severity vulnerabilities
+To address all issues (including breaking changes), run:
+  npm audit fix --force
+Run `npm audit` for details.
+exit code: 0
+==================================================================
+$ npm run typecheck     (2026-11-20T23:00:39Z)
+==================================================================
+> stembot-control@0.1.0 typecheck
+> tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.node.json
+exit code: 0
+==================================================================
+$ npm run lint     (2026-11-20T23:01:02Z)
+==================================================================
+> stembot-control@0.1.0 lint
+> eslint . --max-warnings=0
+C:\Users\sneha\Music\stembot\src\store\garage.ts
+  50:3   warning  Unused eslint-disable directive (no problems were reported from 'no-control-regex')
+  52:14  error    Unexpected control character(s) in regular expression: \x00, \x1f                    no-control-regex
+✖ 2 problems (1 error, 1 warning)
+  0 errors and 1 warning potentially fixable with the `--fix` option.
+exit code: 1
+==================================================================
+$ npm run format:check     (2026-11-20T23:01:20Z)
+==================================================================
+> stembot-control@0.1.0 format:check
+> prettier --check .
+Checking formatting...
+All matched files use Prettier code style!
+exit code: 0
+==================================================================
+$ npm test     (2026-11-20T23:01:26Z)
+==================================================================
+> stembot-control@0.1.0 test
+> vitest run
+ RUN  v5.1.1 C:/Users/sneha/Music/stembot
+ Test Files  3 passed (3)
+      Tests  45 passed (45)
+   Start at  04:31:29
+   Duration  1.22s (transform 54%, import 27%, tests 12%, worker 7%)
+exit code: 0
+==================================================================
+$ npm run build     (2026-11-20T23:01:31Z)
+==================================================================
+> stembot-control@0.1.0 build
+> npm run typecheck && vite build
+> stembot-control@0.1.0 typecheck
+> tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.node.json
+vite v8.3.8 building client environment for production...
+transforming...
+✓ 2198 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/manifest.webmanifest                                   0.55 kB
+dist/index.html                                             1.20 kB │ gzip:   0.58 kB
+dist/assets/chakra-petch-latin-700-normal-CnDBPjkL.woff2    9.90 kB
+dist/assets/chakra-petch-latin-500-normal-BR1ody1F.woff2    9.95 kB
+dist/assets/chakra-petch-latin-600-normal-DVQm9bgb.woff2    9.96 kB
+dist/assets/chakra-petch-latin-700-normal-D1s_c2du.woff    13.33 kB
+dist/assets/chakra-petch-latin-500-normal-CnUQnZ4D.woff    13.40 kB
+dist/assets/chakra-petch-latin-600-normal-DQKfcdKo.woff    13.43 kB
+dist/assets/index-CkeOMek_.css                             33.58 kB │ gzip:   7.82 kB
+dist/assets/web-DwzISJ7Y.js                                 0.84 kB │ gzip:   0.40 kB
+dist/assets/web-DGlzY_pz.js                                 0.89 kB │ gzip:   0.45 kB
+dist/assets/virtual_pwa-register-BIuPDyUU.js                1.12 kB │ gzip:   0.59 kB
+dist/assets/workbox-window.prod.es5-Bd17z0YL.js             5.65 kB │ gzip:   2.20 kB
+dist/assets/web-5UAqGVMg.js                                 7.74 kB │ gzip:   2.28 kB
+dist/assets/esm-CtMP8Ce4.js                                 8.86 kB │ gzip:   2.51 kB
+dist/assets/index-CB7yB3Ov.js                             334.99 kB │ gzip: 104.46 kB
+✓ built in 2.09s
+PWA v2.0.0
+mode      generateSW
+precache  27 entries (465.31 KiB)
+files generated
+  dist/sw.js
+  dist/workbox-2fbc6a65.js
+exit code: 0
+==================================================================
+$ npm run e2e     (2026-11-20T23:01:55Z)
+==================================================================
+> stembot-control@0.1.0 e2e
+> playwright test
+Running 30 tests using 1 worker
+  ok  1 [mobile] › e2e\smoke.spec.ts:5:3 › first run and screens › connect and drive from an empty garage, every main screen renders and passes axe (34.7s)
+  ok  2 [mobile] › e2e\smoke.spec.ts:69:3 › first run and screens › add-car problems: cancelled chooser, Bluetooth off, permission denied, already added (10.8s)
+  ok  3 [mobile] › e2e\smoke.spec.ts:106:3 › first run and screens › unsupported browser shows the alternative (651ms)
+  ok  4 [mobile] › e2e\smoke.spec.ts:126:3 › safety: every way out sends stop › keyboard: hold W drives with keep-alive, release sends x (3.4s)
+  ok  5 [mobile] › e2e\smoke.spec.ts:139:3 › safety: every way out sends stop › joystick: drag up drives, letting go sends x (2.7s)
+  ok  6 [mobile] › e2e\smoke.spec.ts:154:3 › safety: every way out sends stop › window blur while driving sends x (2.8s)
+  ok  7 [mobile] › e2e\smoke.spec.ts:166:3 › safety: every way out sends stop › switching tabs (visibility hidden) sends x (2.4s)
+  ok  8 [mobile] › e2e\smoke.spec.ts:179:3 › safety: every way out sends stop › Space and the giant STOP stop the car (2.8s)
+  ok  9 [mobile] › e2e\smoke.spec.ts:195:3 › safety: every way out sends stop › a lifted car stops, shows it, and refuses to drive (3.8s)
+  ok 10 [mobile] › e2e\smoke.spec.ts:207:3 › safety: every way out sends stop › losing the link stops, tells the user in plain words, and offers reconnect (5.0s)
+  ok 11 [mobile] › e2e\smoke.spec.ts:221:3 › safety: every way out sends stop › arrow keys inside the speed selector change speed, not direction (2.3s)
+  ok 12 [mobile] › e2e\smoke.spec.ts:234:3 › safety: every way out sends stop › lock controls blocks driving but never blocks STOP (2.7s)
+  ok 13 [mobile] › e2e\smoke.spec.ts:247:3 › group drive › one control drives every ticked car; one failing car never blocks the others (6.7s)
+  ok 14 [mobile] › e2e\smoke.spec.ts:286:3 › group drive › reverse wheels swaps w/s for that car only (4.0s)
+  -  15 [mobile] › e2e\smoke.spec.ts:301:1 › desktop: keyboard hint shows once, then stays dismissed
+  ok 16 [desktop] › e2e\smoke.spec.ts:5:3 › first run and screens › connect and drive from an empty garage, every main screen renders and passes axe (25.6s)
+  ok 17 [desktop] › e2e\smoke.spec.ts:69:3 › first run and screens › add-car problems: cancelled chooser, Bluetooth off, permission denied, already added (11.7s)
+  ok 18 [desktop] › e2e\smoke.spec.ts:106:3 › first run and screens › unsupported browser shows the alternative (852ms)
+  ok 19 [desktop] › e2e\smoke.spec.ts:126:3 › safety: every way out sends stop › keyboard: hold W drives with keep-alive, release sends x (3.6s)
+  ok 20 [desktop] › e2e\smoke.spec.ts:139:3 › safety: every way out sends stop › joystick: drag up drives, letting go sends x (3.6s)
+  ok 21 [desktop] › e2e\smoke.spec.ts:154:3 › safety: every way out sends stop › window blur while driving sends x (3.4s)
+  ok 22 [desktop] › e2e\smoke.spec.ts:166:3 › safety: every way out sends stop › switching tabs (visibility hidden) sends x (3.1s)
+  ok 23 [desktop] › e2e\smoke.spec.ts:179:3 › safety: every way out sends stop › Space and the giant STOP stop the car (3.2s)
+  ok 24 [desktop] › e2e\smoke.spec.ts:195:3 › safety: every way out sends stop › a lifted car stops, shows it, and refuses to drive (3.4s)
+  ok 25 [desktop] › e2e\smoke.spec.ts:207:3 › safety: every way out sends stop › losing the link stops, tells the user in plain words, and offers reconnect (4.0s)
+  ok 26 [desktop] › e2e\smoke.spec.ts:221:3 › safety: every way out sends stop › arrow keys inside the speed selector change speed, not direction (2.0s)
+  ok 27 [desktop] › e2e\smoke.spec.ts:234:3 › safety: every way out sends stop › lock controls blocks driving but never blocks STOP (2.6s)
+  ok 28 [desktop] › e2e\smoke.spec.ts:247:3 › group drive › one control drives every ticked car; one failing car never blocks the others (6.4s)
+  ok 29 [desktop] › e2e\smoke.spec.ts:286:3 › group drive › reverse wheels swaps w/s for that car only (4.3s)
+  ok 30 [desktop] › e2e\smoke.spec.ts:301:1 › desktop: keyboard hint shows once, then stays dismissed (3.6s)
+  1 skipped
+  29 passed (2.9m)
+exit code: 0
+==================================================================
+$ npm audit --omit=dev     (2026-11-20T23:04:56Z)
+==================================================================
+found 0 vulnerabilities
+exit code: 0
+==================================================================
+$ npm audit     (2026-11-20T23:05:01Z)
+==================================================================
+# npm audit report
+glob  9.0.0 - 14.0.1
+Severity: moderate
+Glob: AbortSignal cancellation bypass allows post-timeout filesystem traversal - https://github.com/advisories/GHSA-3g3m-2fjr-6pw4
+Depends on vulnerable versions of minimatch
+fix available via `npm audit fix --force`
+Will install vite-plugin-pwa@1.1.0, which is a breaking change
+node_modules/workbox-build/node_modules/glob
+  workbox-build  >=7.4.0
+  Depends on vulnerable versions of glob
+  node_modules/workbox-build
+    vite-plugin-pwa  >=1.2.0
+    Depends on vulnerable versions of workbox-build
+    node_modules/vite-plugin-pwa
+minimatch  7.0.0 - 11.0.0
+Severity: moderate
+minimatch has potential denial of service via globparts amplification - https://github.com/advisories/GHSA-g3hv-75wg-m249
+fix available via `npm audit fix --force`
+Will install vite-plugin-pwa@1.1.0, which is a breaking change
+node_modules/workbox-build/node_modules/minimatch
+4 moderate severity vulnerabilities
+To address all issues (including breaking changes), run:
+  npm audit fix --force
+exit code: 1
+==================================================================
+$ npm run lint     (re-run after lint fix, 2026-11-20T23:06:21Z)
+==================================================================
+> stembot-control@0.1.0 lint
+> eslint . --max-warnings=0
+exit code: 0
+==================================================================
+$ npm run typecheck     (re-run after lint fix, 2026-11-20T23:06:35Z)
+==================================================================
+> stembot-control@0.1.0 typecheck
+> tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.node.json
+exit code: 0
+==================================================================
+$ npm test     (re-run after lint fix, 2026-11-20T23:06:50Z)
+==================================================================
+> stembot-control@0.1.0 test
+> vitest run
+ RUN  v5.1.1 C:/Users/sneha/Music/stembot
+ Test Files  3 passed (3)
+      Tests  45 passed (45)
+   Start at  04:36:53
+   Duration  753ms (import 39%, tests 28%, transform 17%, worker 15%, environment 1%)
+exit code: 0
+==================================================================
+$ npm run build     (re-run after lint fix, 2026-11-20T23:06:54Z)
+==================================================================
+> stembot-control@0.1.0 build
+> npm run typecheck && vite build
+> stembot-control@0.1.0 typecheck
+> tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.node.json
+vite v8.3.8 building client environment for production...
+transforming...
+✓ 2198 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/manifest.webmanifest                                   0.55 kB
+dist/index.html                                             1.20 kB │ gzip:   0.58 kB
+dist/assets/chakra-petch-latin-700-normal-CnDBPjkL.woff2    9.90 kB
+dist/assets/chakra-petch-latin-500-normal-BR1ody1F.woff2    9.95 kB
+dist/assets/chakra-petch-latin-600-normal-DVQm9bgb.woff2    9.96 kB
+dist/assets/chakra-petch-latin-700-normal-D1s_c2du.woff    13.33 kB
+dist/assets/chakra-petch-latin-500-normal-CnUQnZ4D.woff    13.40 kB
+dist/assets/chakra-petch-latin-600-normal-DQKfcdKo.woff    13.43 kB
+dist/assets/index-CkeOMek_.css                             33.58 kB │ gzip:   7.82 kB
+dist/assets/web-DpS-BiVu.js                                 0.84 kB │ gzip:   0.40 kB
+dist/assets/web-BXAGwuK7.js                                 0.89 kB │ gzip:   0.45 kB
+dist/assets/virtual_pwa-register-BJBaczWv.js                1.12 kB │ gzip:   0.59 kB
+dist/assets/workbox-window.prod.es5-Bd17z0YL.js             5.65 kB │ gzip:   2.20 kB
+dist/assets/web-nPhWtZNx.js                                 7.74 kB │ gzip:   2.28 kB
+dist/assets/esm-DMrxrbDU.js                                 8.86 kB │ gzip:   2.51 kB
+dist/assets/index-CCVuljlt.js                             335.02 kB │ gzip: 104.48 kB
+✓ built in 2.45s
+PWA v2.0.0
+mode      generateSW
+precache  27 entries (465.34 KiB)
+files generated
+  dist/sw.js
+  dist/workbox-2fbc6a65.js
+exit code: 0
+==================================================================
+$ npm run e2e     (re-run after lint fix, 2026-11-20T23:07:22Z)
+==================================================================
+> stembot-control@0.1.0 e2e
+> playwright test
+Running 30 tests using 1 worker
+  ok  1 [mobile] › e2e\smoke.spec.ts:5:3 › first run and screens › connect and drive from an empty garage, every main screen renders and passes axe (33.4s)
+  ok  2 [mobile] › e2e\smoke.spec.ts:69:3 › first run and screens › add-car problems: cancelled chooser, Bluetooth off, permission denied, already added (11.0s)
+  ok  3 [mobile] › e2e\smoke.spec.ts:106:3 › first run and screens › unsupported browser shows the alternative (545ms)
+  ok  4 [mobile] › e2e\smoke.spec.ts:126:3 › safety: every way out sends stop › keyboard: hold W drives with keep-alive, release sends x (3.3s)
+  ok  5 [mobile] › e2e\smoke.spec.ts:139:3 › safety: every way out sends stop › joystick: drag up drives, letting go sends x (2.9s)
+  ok  6 [mobile] › e2e\smoke.spec.ts:154:3 › safety: every way out sends stop › window blur while driving sends x (3.1s)
+  ok  7 [mobile] › e2e\smoke.spec.ts:166:3 › safety: every way out sends stop › switching tabs (visibility hidden) sends x (2.6s)
+  ok  8 [mobile] › e2e\smoke.spec.ts:179:3 › safety: every way out sends stop › Space and the giant STOP stop the car (3.0s)
+  ok  9 [mobile] › e2e\smoke.spec.ts:195:3 › safety: every way out sends stop › a lifted car stops, shows it, and refuses to drive (4.2s)
+  ok 10 [mobile] › e2e\smoke.spec.ts:207:3 › safety: every way out sends stop › losing the link stops, tells the user in plain words, and offers reconnect (5.6s)
+  ok 11 [mobile] › e2e\smoke.spec.ts:221:3 › safety: every way out sends stop › arrow keys inside the speed selector change speed, not direction (2.5s)
+  ok 12 [mobile] › e2e\smoke.spec.ts:234:3 › safety: every way out sends stop › lock controls blocks driving but never blocks STOP (2.9s)
+  ok 13 [mobile] › e2e\smoke.spec.ts:247:3 › group drive › one control drives every ticked car; one failing car never blocks the others (7.2s)
+  ok 14 [mobile] › e2e\smoke.spec.ts:286:3 › group drive › reverse wheels swaps w/s for that car only (4.2s)
+  -  15 [mobile] › e2e\smoke.spec.ts:301:1 › desktop: keyboard hint shows once, then stays dismissed
+  ok 16 [desktop] › e2e\smoke.spec.ts:5:3 › first run and screens › connect and drive from an empty garage, every main screen renders and passes axe (25.5s)
+  ok 17 [desktop] › e2e\smoke.spec.ts:69:3 › first run and screens › add-car problems: cancelled chooser, Bluetooth off, permission denied, already added (10.5s)
+  ok 18 [desktop] › e2e\smoke.spec.ts:106:3 › first run and screens › unsupported browser shows the alternative (669ms)
+  ok 19 [desktop] › e2e\smoke.spec.ts:126:3 › safety: every way out sends stop › keyboard: hold W drives with keep-alive, release sends x (3.4s)
+  ok 20 [desktop] › e2e\smoke.spec.ts:139:3 › safety: every way out sends stop › joystick: drag up drives, letting go sends x (3.2s)
+  ok 21 [desktop] › e2e\smoke.spec.ts:154:3 › safety: every way out sends stop › window blur while driving sends x (2.8s)
+  ok 22 [desktop] › e2e\smoke.spec.ts:166:3 › safety: every way out sends stop › switching tabs (visibility hidden) sends x (2.3s)
+  ok 23 [desktop] › e2e\smoke.spec.ts:179:3 › safety: every way out sends stop › Space and the giant STOP stop the car (2.7s)
+  ok 24 [desktop] › e2e\smoke.spec.ts:195:3 › safety: every way out sends stop › a lifted car stops, shows it, and refuses to drive (3.2s)
+  ok 25 [desktop] › e2e\smoke.spec.ts:207:3 › safety: every way out sends stop › losing the link stops, tells the user in plain words, and offers reconnect (3.5s)
+  ok 26 [desktop] › e2e\smoke.spec.ts:221:3 › safety: every way out sends stop › arrow keys inside the speed selector change speed, not direction (2.1s)
+  ok 27 [desktop] › e2e\smoke.spec.ts:234:3 › safety: every way out sends stop › lock controls blocks driving but never blocks STOP (2.8s)
+  ok 28 [desktop] › e2e\smoke.spec.ts:247:3 › group drive › one control drives every ticked car; one failing car never blocks the others (6.5s)
+  ok 29 [desktop] › e2e\smoke.spec.ts:286:3 › group drive › reverse wheels swaps w/s for that car only (4.9s)
+  ok 30 [desktop] › e2e\smoke.spec.ts:301:1 › desktop: keyboard hint shows once, then stays dismissed (3.9s)
+  1 skipped
+  29 passed (3.0m)
+exit code: 0
