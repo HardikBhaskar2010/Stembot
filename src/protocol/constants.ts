@@ -39,6 +39,18 @@ export const TELEMETRY_PERIOD_MS = 150;
 /** No telemetry for this long = "Waiting for data". */
 export const TELEMETRY_STALE_MS = 1000;
 
+/**
+ * Firmware v2 settings (`i`, `o`) reset to off when the link drops, so the app re-sends them
+ * this long after the first `x` of every (re)connect.
+ */
+export const SETTINGS_RESEND_DELAY_MS = 300;
+
+/** Forward obstacle stop range accepted by firmware v2 (`o<cm>`, `o0` = off). */
+export const OBSTACLE_MIN_CM = 10;
+export const OBSTACLE_MAX_CM = 100;
+/** Choices offered in the UI. 0 = off. */
+export const OBSTACLE_CHOICES = [0, 20, 30, 50] as const;
+
 /** Quick-command pulse lengths. */
 export const NUDGE_MS = 300;
 export const SPIN_MS = 450;

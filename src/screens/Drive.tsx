@@ -32,10 +32,14 @@ export function Drive({ carId }: { carId: string }) {
   const connected = live.status === 'connected';
   const tel = live.telemetry;
   const stale = !live.telemetryAt || now - live.telemetryAt > TELEMETRY_STALE_MS;
+  const liftStops = car?.stopWhenLifted ?? false;
+  // Lifted only blocks driving when this car's "Stop when lifted" is on (firmware v2 default: off).
   const state: RadarState = !connected
     ? 'offline'
     : tel?.lifted
-      ? 'lifted'
+      ? liftStops
+        ? 'lifted'
+        : 'lifted-drivable'
       : stale || !tel
         ? 'waiting'
         : tel.distanceCm === null
@@ -68,7 +72,7 @@ export function Drive({ carId }: { carId: string }) {
         <span className="tag" aria-hidden="true" />
         <h1 className="topbar__title">{car.name}</h1>
         {connected && q !== null && <Bars level={q} label={`${t('garage.signal')} ${q} / 3`} />}
-        <StatusChip status={live.status} lifted={tel?.lifted ?? false} />
+        <StatusChip status={live.status} lifted={tel?.lifted ?? false} liftStops={liftStops} />
         <IconButton label={t('garage.editCar', { name: car.name })} onClick={() => editCar(car.id)}>
           <Settings2 size={20} aria-hidden="true" />
         </IconButton>

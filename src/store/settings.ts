@@ -33,6 +33,8 @@ export interface Settings {
   speedMode: SpeedMode;
   pinned: QuickCommandId[];
   keyboardHintSeen: boolean;
+  /** One-time notice shown the first time "Stop when lifted" is turned off. */
+  liftOffNoticeSeen: boolean;
 }
 
 interface SettingsState extends Settings {
@@ -53,6 +55,7 @@ export const DEFAULT_SETTINGS: Settings = {
   speedMode: 'normal',
   pinned: ['spin-left', 'spin-right', 'nudge-forward', 'nudge-back'],
   keyboardHintSeen: false,
+  liftOffNoticeSeen: false,
 };
 
 export const MAX_PINNED = 6;

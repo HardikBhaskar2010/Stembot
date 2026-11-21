@@ -4,7 +4,8 @@ import { ZONE_CLOSE_CM, ZONE_VERY_CLOSE_CM } from '../protocol/constants';
 import type { Units } from '../store/settings';
 
 export type Zone = 'clear' | 'close' | 'very-close';
-export type RadarState = 'live' | 'no-echo' | 'waiting' | 'lifted' | 'offline';
+/** 'lifted' = lifted and stopped (Stop when lifted on); 'lifted-drivable' = lifted, still drives. */
+export type RadarState = 'live' | 'no-echo' | 'waiting' | 'lifted' | 'lifted-drivable' | 'offline';
 
 export function zoneOf(cm: number): Zone {
   if (cm < ZONE_VERY_CLOSE_CM) return 'very-close';
@@ -125,7 +126,15 @@ export function Radar({
       </svg>
 
       <div className="radar__readout" aria-live="off">
-        {state === 'lifted' ? (
+        {state === 'lifted-drivable' ? (
+          <div className="radar__status radar__status--lifted-drivable">
+            <ArrowUpFromLine size={28} aria-hidden="true" />
+            <div>
+              <strong>{t('radar.liftedDrivable')}</strong>
+              {!compact && <span>{t('radar.liftedDrivableBody')}</span>}
+            </div>
+          </div>
+        ) : state === 'lifted' ? (
           <div className="radar__status radar__status--lifted">
             <ArrowUpFromLine size={28} aria-hidden="true" />
             <div>

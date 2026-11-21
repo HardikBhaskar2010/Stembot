@@ -19,6 +19,7 @@ export function exposeTestHooks(): void {
     received: (id: string) => [...mock.receivedLines(id)],
     setLifted: (id: string, v: boolean) => mock.setLifted(id, v),
     drop: (id: string) => mock.dropConnection(id),
+    firmware: (id: string) => mock.firmwareStateOf(id),
     nextPick: (mode: 'auto' | 'cancel' | 'bluetooth-off' | 'permission-denied') => {
       mock.nextPick = mode;
     },

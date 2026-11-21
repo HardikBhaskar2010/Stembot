@@ -1,15 +1,26 @@
-import { MAX_COMMAND_BYTES, SPEED_DEFAULT, SPEED_MAX, SPEED_MIN } from './constants';
+import {
+  MAX_COMMAND_BYTES,
+  OBSTACLE_MAX_CM,
+  OBSTACLE_MIN_CM,
+  SPEED_DEFAULT,
+  SPEED_MAX,
+  SPEED_MIN,
+} from './constants';
 
 export type Direction = 'forward' | 'backward' | 'left' | 'right';
 
 export type CarCommand =
   | { kind: 'drive'; dir: Direction; speed: number }
   | { kind: 'stop' }
-  /** Capability query. Current firmware ignores it (TO VALIDATE); proposed firmware answers `C:...`. */
+  /** Capability query. Firmware v2 answers `C:<version>,<hasUltrasonic>,<hasHorn>`. */
   | { kind: 'query' }
-  /** Proposed firmware commands, only sent when the car reports the capability. */
+  /** Honk / locate, only sent when the car reports hasHorn. */
   | { kind: 'honk' }
   | { kind: 'locate' }
+  /** Firmware v2 lift-off stop: `i1` on, `i0` off (car default off, resets on disconnect). */
+  | { kind: 'liftStop'; on: boolean }
+  /** Firmware v2 forward obstacle stop: `o<cm>` 10..100, `o0` off (resets on disconnect). */
+  | { kind: 'obstacle'; cm: number }
   /** Dev options: any printable ASCII string. */
   | { kind: 'raw'; text: string };
 
@@ -53,6 +64,12 @@ export function effectiveSpeed(carSpeed: number, mode: SpeedMode): number {
   return clampSpeed(clampSpeed(carSpeed) * SPEED_MODE_FACTOR[mode]);
 }
 
+/** 0 (off) or a whole number of cm inside the firmware range (10..100). */
+export function clampObstacle(cm: number): number {
+  if (!Number.isFinite(cm) || cm <= 0) return 0;
+  return Math.min(OBSTACLE_MAX_CM, Math.max(OBSTACLE_MIN_CM, Math.round(cm)));
+}
+
 const PRINTABLE = /^[\x20-\x7e]*$/;
 
 export class CommandError extends Error {}
@@ -72,6 +89,10 @@ export function encodeCommand(cmd: CarCommand, opts: { reversed?: boolean } = {}
       return 'h\n';
     case 'locate':
       return 'l\n';
+    case 'liftStop':
+      return cmd.on ? 'i1\n' : 'i0\n';
+    case 'obstacle':
+      return `o${clampObstacle(cmd.cm)}\n`;
     case 'raw': {
       const text = cmd.text.replace(/[\r\n]+$/g, '');
       if (!PRINTABLE.test(text))

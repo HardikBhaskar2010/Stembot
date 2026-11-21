@@ -3,6 +3,7 @@
 Drive STEMBOT micro:bit robot cars over Bluetooth, one car or a group. One React + TypeScript codebase ships as an installable web app (PWA, Web Bluetooth) and as Android and iOS apps (Capacitor + native BLE).
 
 - Design spec: [docs/DESIGN.md](docs/DESIGN.md) · Product facts: [PRODUCT.md](PRODUCT.md)
+- Car firmware v2.0 (MakeCode): `stembot_fw_boardA.ts`, `stembot_fw_boardB.ts`
 - Car protocol: [docs/PROTOCOL.md](docs/PROTOCOL.md) · Firmware ideas: [docs/FIRMWARE_SUGGESTIONS.md](docs/FIRMWARE_SUGGESTIONS.md)
 - Real-car test checklist: [docs/TEST_CHECKLIST.md](docs/TEST_CHECKLIST.md)
 - Screenshots (mock cars): [docs/screenshots](docs/screenshots)
@@ -89,4 +90,4 @@ src/
 
 The UI never touches a Bluetooth API: ESLint blocks `navigator.bluetooth` and the BLE plugin outside `src/transport`.
 
-Safety: release, STOP, Space, shake, tab hidden, window blur, page hide, native app pause, lifted car and lost link all send `x` to every car. The car's own 250 ms watchdog and disconnect stop are the second line of defence.
+Safety: release, STOP, Space, shake, tab hidden, window blur, page hide, native app pause and lost link all send `x`; a lifted car is stopped only if its "Stop when lifted" setting is on (firmware v2 default is off, so a lifted car keeps driving). The car's own 250 ms watchdog and disconnect stop are the second line of defence.

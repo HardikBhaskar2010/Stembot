@@ -8,6 +8,7 @@ import { useSettings } from '../store/settings';
 import { useUi } from '../store/ui';
 import { Bars, Button, IconButton } from './primitives';
 import { formatDistance, MiniEcho } from './Radar';
+import { LiftStopSwitch } from './CarOptions';
 import { StatusChip, useNow } from './shared';
 
 export function CarCard({ car }: { car: SavedCar }) {
@@ -37,7 +38,7 @@ export function CarCard({ car }: { car: SavedCar }) {
       </header>
 
       <div className="car-card__status">
-        <StatusChip status={live.status} lifted={lifted} />
+        <StatusChip status={live.status} lifted={lifted} liftStops={car.stopWhenLifted} />
         {car.source === 'mock' && <span className="chip">{t('app.mockBadge')}</span>}
       </div>
 
@@ -76,6 +77,8 @@ export function CarCard({ car }: { car: SavedCar }) {
           </dd>
         </div>
       </dl>
+
+      <LiftStopSwitch car={car} />
 
       <div className="car-card__actions">
         {connected ? (

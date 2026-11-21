@@ -1,5 +1,8 @@
 # Firmware suggestions (MakeCode, micro:bit V2)
 
+> **Status (firmware v2.0 in the repo root):** suggestions 1 (ignore unknown letters), 2 (capability handshake), 3 (honk and locate) and 4 (obstacle stop, `o<cm>`) are implemented by the owner, plus a new lift-off stop toggle (`i1`/`i0`, default off). The app supports all of them. Still TO VALIDATE on the car: honk on P12 must not twitch the wheels (noted in the firmware).
+
+
 Nothing here has been flashed. I have **not seen your firmware source**; the snippets assume the structure described in the brief and the pin-map notes: a `bluetooth.onUartDataReceived(NewLine)` handler that stores the newest command, one `basic.forever` loop that applies it every 20 ms, a 250 ms watchdog, and a `D:` telemetry line every ~150 ms. Merge them by hand into that structure and keep the existing safety behaviour (watchdog, disconnect stop, button B stop, lift stop).
 
 Labels: **OBSERVED** (seen on the car), **INFERRED** (deduced), **HYPOTHESIZED** (best guess), **TO VALIDATE** (must be tested on the car).

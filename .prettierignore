@@ -10,3 +10,5 @@ docs/screenshots
 dev-dist
 public
 *.md
+# MakeCode firmware: keep its own style
+stembot_fw_*.ts

@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   applyReverse,
+  clampObstacle,
   clampSpeed,
   effectiveSpeed,
   encodeCommand,
@@ -70,5 +71,26 @@ describe('encodeCommand', () => {
       }
     }
     expect(() => toBytes('y'.repeat(21))).toThrow(CommandError);
+  });
+
+  it('encodes firmware v2 lift-off stop as i1 / i0', () => {
+    expect(encodeCommand({ kind: 'liftStop', on: true })).toBe('i1\n');
+    expect(encodeCommand({ kind: 'liftStop', on: false })).toBe('i0\n');
+  });
+
+  it('encodes firmware v2 obstacle stop as o<cm> within 10..100, o0 = off', () => {
+    expect(encodeCommand({ kind: 'obstacle', cm: 30 })).toBe('o30\n');
+    expect(encodeCommand({ kind: 'obstacle', cm: 0 })).toBe('o0\n');
+    expect(encodeCommand({ kind: 'obstacle', cm: 5 })).toBe('o10\n');
+    expect(encodeCommand({ kind: 'obstacle', cm: 250 })).toBe('o100\n');
+    expect(encodeCommand({ kind: 'obstacle', cm: -3 })).toBe('o0\n');
+    expect(encodeCommand({ kind: 'obstacle', cm: Number.NaN })).toBe('o0\n');
+    expect(clampObstacle(49.6)).toBe(50);
+    expect(toBytes(encodeCommand({ kind: 'obstacle', cm: 100 })).length).toBeLessThanOrEqual(20);
+  });
+
+  it('reverse wheels never changes i / o commands', () => {
+    expect(encodeCommand({ kind: 'liftStop', on: true }, { reversed: true })).toBe('i1\n');
+    expect(encodeCommand({ kind: 'obstacle', cm: 20 }, { reversed: true })).toBe('o20\n');
   });
 });

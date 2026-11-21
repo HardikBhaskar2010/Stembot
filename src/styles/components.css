@@ -684,3 +684,49 @@
 .bars[data-level='1'] i:nth-child(-n + 1) {
   background: var(--caution);
 }
+
+/* Firmware v2: a lifted car that still drives is a calm state, not a warning. */
+.chip--lifted-drivable {
+  color: var(--signal);
+}
+
+/* ---------- Per-car firmware options (Stop when lifted, Obstacle stop) ---------- */
+.car-options {
+  display: grid;
+  gap: var(--s-4);
+  border-radius: var(--r-card);
+  padding: var(--s-4) var(--s-5);
+}
+
+.car-options__name {
+  font-size: var(--fs-lg);
+}
+
+.car-option {
+  display: flex;
+  align-items: center;
+  gap: var(--s-4);
+  min-height: 56px;
+}
+
+.car-option--stack {
+  display: grid;
+  gap: var(--s-3);
+}
+
+.car-option__text {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.car-option__label {
+  color: var(--ink-hi);
+  font-weight: 500;
+}
+
+.car-option__hint {
+  font-size: var(--fs-sm);
+  color: var(--ink-dim);
+}

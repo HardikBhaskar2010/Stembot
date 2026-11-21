@@ -1,7 +1,7 @@
 import { t } from '../i18n/en';
 import { haptic, sound } from '../platform/feedback';
 import { effectiveSpeed, type Direction } from '../protocol/commands';
-import { NUDGE_MS, SPIN_MS } from '../protocol/constants';
+import { NUDGE_MS, SETTINGS_RESEND_DELAY_MS, SPIN_MS } from '../protocol/constants';
 import { LineAssembler, parseLine } from '../protocol/telemetry';
 import { useDevLog } from '../store/devlog';
 import { useGarage, type SavedCar } from '../store/garage';
@@ -24,6 +24,8 @@ interface Session {
   assembler: LineAssembler;
   lifted: boolean;
   lastPersistAt: number;
+  /** Pending re-send of firmware v2 settings after (re)connect. */
+  settingsTimer: ReturnType<typeof setTimeout> | null;
 }
 
 const sessions = new Map<string, Session>();
@@ -49,8 +51,31 @@ setInterval(() => {
   }
 }, 500);
 
+/**
+ * Lifted cars are blocked only when the user turned "Stop when lifted" on for that car
+ * (firmware v2 default is off: a lifted car keeps driving). Lock blocks every car.
+ * Each car is evaluated on its own, so one car lifting never affects the others.
+ */
 function applyBlock(s: Session) {
-  s.link.setBlocked(s.lifted || useLive.getState().locked);
+  const stopWhenLifted = car(s.carId)?.stopWhenLifted ?? false;
+  s.link.setBlocked((s.lifted && stopWhenLifted) || useLive.getState().locked);
+}
+
+/** Send this car's firmware v2 settings (`i`, and `o` if set). They reset on every disconnect. */
+function sendFirmwareSettings(s: Session) {
+  if (sessions.get(s.carId) !== s) return;
+  const c = car(s.carId);
+  if (!c) return;
+  s.link.send({ kind: 'liftStop', on: c.stopWhenLifted });
+  if (c.obstacleCm > 0) s.link.send({ kind: 'obstacle', cm: c.obstacleCm });
+  useLive.getState().patch(s.carId, {
+    fw: { liftStop: c.stopWhenLifted, obstacleCm: c.obstacleCm, sentAt: Date.now() },
+  });
+}
+
+function clearSettingsTimer(s: Session) {
+  if (s.settingsTimer) clearTimeout(s.settingsTimer);
+  s.settingsTimer = null;
 }
 
 function onLine(s: Session, line: string) {
@@ -66,9 +91,12 @@ function onLine(s: Session, line: string) {
     if (parsed.value.lifted !== s.lifted) {
       s.lifted = parsed.value.lifted;
       applyBlock(s);
-      if (s.lifted) {
+      const stops = car(s.carId)?.stopWhenLifted ?? false;
+      if (s.lifted && stops) {
         haptic('warning');
         useNotify.getState().announce(t('events.lifted', { name }), true);
+      } else if (s.lifted) {
+        useNotify.getState().announce(t('events.liftedDrivable', { name }));
       } else useNotify.getState().announce(t('events.landed', { name }));
     }
     if (now - s.lastPersistAt > 2000) {
@@ -86,7 +114,8 @@ function onLine(s: Session, line: string) {
         json: JSON.stringify(parsed.value),
       });
   } else if (parsed.type === 'capabilities') {
-    live.patch(s.carId, { capabilities: parsed.value });
+    live.patch(s.carId, { capabilities: parsed.value, capsRaw: line });
+    useGarage.getState().updateCar(s.carId, { caps: parsed.value });
     log.add({
       t: Date.now(),
       carId: s.carId,
@@ -109,10 +138,17 @@ function onLine(s: Session, line: string) {
 function handleLost(carId: string) {
   const s = sessions.get(carId);
   if (!s) return;
+  clearSettingsTimer(s);
   s.link.dispose();
   sessions.delete(carId);
   const c = car(carId);
-  useLive.getState().patch(carId, { status: 'lost', driving: false, telemetry: null });
+  // The car resets its v2 settings when the link drops; show that in dev options.
+  useLive.getState().patch(carId, {
+    status: 'lost',
+    driving: false,
+    telemetry: null,
+    fw: { liftStop: null, obstacleCm: null, sentAt: null },
+  });
   useGarage.getState().recordDrop(carId, Date.now());
   useDevLog.getState().add({ t: Date.now(), carId, dir: 'sys', text: 'link lost' });
   const name = c?.name ?? '';
@@ -200,15 +236,26 @@ export async function openSession(c: SavedCar): Promise<void> {
     assembler: new LineAssembler(),
     lifted: false,
     lastPersistAt: 0,
+    settingsTimer: null,
   };
   holder.s = s;
   sessions.set(c.id, s);
   applyBlock(s);
   link.stop(); // known state
-  link.send({ kind: 'query' }); // capability handshake; current firmware ignores it
-  useLive
-    .getState()
-    .patch(c.id, { status: 'connected', error: null, rxTimes: [], capabilities: null });
+  link.send({ kind: 'query' }); // capability handshake: firmware v2 answers C:<ver>,<us>,<horn>
+  // Firmware v2 resets lift-stop and obstacle-stop on every disconnect: re-send ~300 ms after x.
+  s.settingsTimer = setTimeout(() => {
+    s.settingsTimer = null;
+    sendFirmwareSettings(s);
+  }, SETTINGS_RESEND_DELAY_MS);
+  useLive.getState().patch(c.id, {
+    status: 'connected',
+    error: null,
+    rxTimes: [],
+    capabilities: null,
+    capsRaw: null,
+    fw: { liftStop: null, obstacleCm: null, sentAt: null },
+  });
   useDevLog
     .getState()
     .add({ t: Date.now(), carId: c.id, dir: 'sys', text: `connected via ${transport.kind}` });
@@ -221,10 +268,16 @@ export async function disconnectCar(carId: string): Promise<void> {
   const s = sessions.get(carId);
   if (!s) return;
   sessions.delete(carId);
+  clearSettingsTimer(s);
   s.link.dispose(); // sends x
   await new Promise((r) => setTimeout(r, 60));
   await s.conn.disconnect().catch(() => undefined);
-  useLive.getState().patch(carId, { status: 'offline', driving: false, telemetry: null });
+  useLive.getState().patch(carId, {
+    status: 'offline',
+    driving: false,
+    telemetry: null,
+    fw: { liftStop: null, obstacleCm: null, sentAt: null },
+  });
   useDevLog.getState().add({ t: Date.now(), carId, dir: 'sys', text: 'disconnected by user' });
 }
 
@@ -240,7 +293,10 @@ function speedFor(carId: string): number {
   return effectiveSpeed(car(carId)?.speed ?? 600, useSettings.getState().speedMode);
 }
 
-/** Hold a direction on these cars. Each car gets its own speed; lifted or locked cars stay stopped. */
+/**
+ * Hold a direction on these cars. Each car gets its own speed. Locked cars, and lifted cars
+ * with "Stop when lifted" on, stay stopped; other lifted cars keep driving.
+ */
 export function hold(carIds: string[], dir: Direction): void {
   if (useLive.getState().locked) return;
   for (const id of carIds) sessions.get(id)?.link.hold(dir, speedFor(id));
@@ -283,6 +339,50 @@ export function setLocked(locked: boolean): void {
   useLive.getState().setLocked(locked);
   for (const s of sessions.values()) applyBlock(s);
   useNotify.getState().announce(t(locked ? 'events.locked' : 'events.unlocked'));
+}
+
+/**
+ * Per-car "Stop when lifted" (firmware v2 `i1`/`i0`). Persisted, sent now if connected,
+ * and re-sent after every reconnect. Turning it off shows a one-time notice.
+ */
+export function setStopWhenLifted(carId: string, on: boolean): void {
+  useGarage.getState().updateCar(carId, { stopWhenLifted: on });
+  const s = sessions.get(carId);
+  if (s) {
+    s.link.send({ kind: 'liftStop', on });
+    const fw = useLive.getState().cars[carId]?.fw;
+    useLive.getState().patch(carId, {
+      fw: { liftStop: on, obstacleCm: fw?.obstacleCm ?? null, sentAt: Date.now() },
+    });
+    applyBlock(s);
+  }
+  const settings = useSettings.getState();
+  if (!on && !settings.liftOffNoticeSeen) {
+    useNotify.getState().toast(
+      {
+        tone: 'warning',
+        title: t('lift.offNoticeTitle'),
+        body: t('lift.offNoticeBody'),
+        action: { label: t('drive.gotIt'), run: () => settings.set('liftOffNoticeSeen', true) },
+      },
+      0,
+    );
+    useSettings.getState().set('liftOffNoticeSeen', true);
+  }
+}
+
+/** Per-car forward obstacle stop (firmware v2 `o<cm>`, 0 = off). */
+export function setObstacleStop(carId: string, cm: number): void {
+  useGarage.getState().updateCar(carId, { obstacleCm: cm });
+  const s = sessions.get(carId);
+  const saved = car(carId)?.obstacleCm ?? 0;
+  if (s) {
+    s.link.send({ kind: 'obstacle', cm: saved });
+    const fw = useLive.getState().cars[carId]?.fw;
+    useLive.getState().patch(carId, {
+      fw: { liftStop: fw?.liftStop ?? null, obstacleCm: saved, sentAt: Date.now() },
+    });
+  }
 }
 
 export function honk(carIds: string[]): void {

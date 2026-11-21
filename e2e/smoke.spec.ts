@@ -53,6 +53,10 @@ test.describe('first run and screens', () => {
 
     await page.goto('/?mock=1#/dev');
     await expect(page.getByRole('heading', { name: 'Dev options' })).toBeVisible();
+    const fwTable = page.getByRole('table', { name: 'Sent to each car' });
+    await expect(fwTable).toContainText('i0');
+    await expect(fwTable).toContainText('C:2.0,1,1'); // Rocket: sensor + horn
+    await expect(fwTable).toContainText('C:2.0,0,1'); // Comet: no distance sensor
     await page.waitForTimeout(500);
     await shot(page, info, '09-dev-live');
     await axe(page, info, 'dev');
@@ -192,16 +196,53 @@ test.describe('safety: every way out sends stop', () => {
     await page.keyboard.up('w');
   });
 
-  test('a lifted car stops, shows it, and refuses to drive', async ({ page }, info) => {
+  test('Stop when lifted off (default): a lifted car shows a calm state and still drives', async ({
+    page,
+  }, info) => {
+    await page.waitForTimeout(400); // i0 is sent ~300 ms after connect
+    expect(await mock(page).received(CAR1)).toContain('i0');
     await mock(page).lift(CAR1, true);
-    await expect(page.getByText('Lifted: car stopped')).toBeVisible({ timeout: 2000 });
-    await shot(page, info, '13-drive-lifted');
+    await expect(page.getByText('Lifted (still drivable)').first()).toBeVisible({ timeout: 2000 });
+    await shot(page, info, '13-drive-lifted-drivable');
+    await page.keyboard.down('w');
+    await page.waitForTimeout(400);
+    expect(await mock(page).motion(CAR1)).toBe('w');
+    await page.keyboard.up('w');
+    await page.waitForTimeout(150);
+    expect(await lastLine(page, CAR1)).toBe('x');
+  });
+
+  test('Stop when lifted on: sends i1, a lifted car stops and refuses to drive', async ({
+    page,
+  }, info) => {
+    await page.getByRole('button', { name: 'Edit Rocket' }).click();
+    const sheet = page.getByRole('dialog', { name: 'Rocket' });
+    await sheet.getByRole('switch', { name: 'Stop when lifted' }).click();
+    await expect(sheet.getByRole('radiogroup', { name: 'Obstacle stop, Rocket' })).toBeVisible();
+    await expect(sheet.getByText(/Helps stop the car/)).toBeVisible();
+    await shot(page, info, '17-car-editor-v2');
+    await page.keyboard.press('Escape');
+    await page.waitForTimeout(100);
+    expect(await mock(page).received(CAR1)).toContain('i1');
+
+    await mock(page).lift(CAR1, true);
+    await expect(page.getByText('Lifted: stopped').first()).toBeVisible({ timeout: 2000 });
+    await shot(page, info, '13-drive-lifted-stopped');
+    const before = (await mock(page).received(CAR1)).length;
     await page.keyboard.down('w');
     await page.waitForTimeout(400);
     expect(await mock(page).motion(CAR1)).toBe('x');
-    const lines = await mock(page).received(CAR1);
-    expect(lines.filter((l) => l.startsWith('w')).length).toBe(0);
+    const after = (await mock(page).received(CAR1)).slice(before);
+    expect(after.filter((l) => l.startsWith('w')).length).toBe(0);
     await page.keyboard.up('w');
+
+    // Turning it off again shows the one-time notice
+    await page.getByRole('button', { name: 'Edit Rocket' }).click();
+    await page
+      .getByRole('dialog', { name: 'Rocket' })
+      .getByRole('switch', { name: 'Stop when lifted' })
+      .click();
+    await expect(page.getByText('A lifted car keeps spinning its wheels').first()).toBeVisible();
   });
 
   test('losing the link stops, tells the user in plain words, and offers reconnect', async ({
@@ -250,6 +291,18 @@ test.describe('group drive', () => {
     await fresh(page);
     await addCar(page, 'Rocket', 'garage');
     await addCar(page, 'Comet', 'garage');
+
+    // Per car: Rocket stops when lifted, Comet keeps the default (off).
+    // Comet has no distance sensor, so it gets no obstacle-stop control.
+    await page.goto('/?mock=1#/settings');
+    const rocket = page.getByRole('region', { name: 'Rocket' });
+    const comet = page.getByRole('region', { name: 'Comet' });
+    await rocket.getByRole('switch', { name: 'Stop when lifted' }).click();
+    await expect(rocket.getByRole('radiogroup', { name: 'Obstacle stop, Rocket' })).toBeVisible();
+    await expect(comet.getByRole('radiogroup')).toHaveCount(0);
+    await rocket.getByRole('radio', { name: '30 cm' }).click();
+    await shot(page, info, '18-settings-cars');
+
     await page.goto('/?mock=1#/group');
     await expect(page.getByText('2 of 2 cars')).toBeVisible();
 
@@ -258,12 +311,20 @@ test.describe('group drive', () => {
     expect(await mock(page).motion(CAR1)).toBe('w');
     expect(await mock(page).motion(CAR2)).toBe('w');
 
-    // Car 1 is lifted: it stops, car 2 keeps going
+    // Car 1 (Stop when lifted on) is lifted: it stops, car 2 keeps going
     await mock(page).lift(CAR1, true);
     await page.waitForTimeout(500);
     expect(await mock(page).motion(CAR1)).toBe('x');
     expect(await mock(page).motion(CAR2)).toBe('w');
+
+    // Car 2 (setting off) is lifted too: it keeps driving, car 1 is unaffected
+    await mock(page).lift(CAR2, true);
+    await page.waitForTimeout(500);
+    expect(await mock(page).motion(CAR2)).toBe('w');
+    expect(await mock(page).motion(CAR1)).toBe('x');
+    await expect(page.getByText('Lifted (still drivable)').first()).toBeVisible();
     await shot(page, info, '15-group-lifted');
+    await mock(page).lift(CAR2, false);
 
     // Car 2 drops off: car 1 is still lifted, nothing hangs, STOP still works
     await mock(page).drop(CAR2);

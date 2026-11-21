@@ -6,6 +6,7 @@ import { SPEED_MAX, SPEED_MIN } from '../protocol/constants';
 import { CAR_COLORS, useGarage } from '../store/garage';
 import { useUi } from '../store/ui';
 import { Button, IconButton, Row, Slider, Switch } from './primitives';
+import { LiftStopSwitch, ObstacleStopControl } from './CarOptions';
 import { useModal } from './useModal';
 
 export function CarEditor() {
@@ -85,6 +86,10 @@ function EditorSheet({ carId, onClose }: { carId: string; onClose: () => void })
               value={car.speed}
               onChange={(v) => update(car.id, { speed: v })}
             />
+          </div>
+          <div className="car-options glass">
+            <LiftStopSwitch car={car} withHint />
+            <ObstacleStopControl car={car} />
           </div>
           <div className="rows glass">
             <Row

@@ -15,6 +15,10 @@ export interface LiveCar {
   capabilities: Capabilities | null;
   stats: LinkStats | null;
   driving: boolean;
+  /** What the app last sent for firmware v2 settings on this link (null = not sent yet). */
+  fw: { liftStop: boolean | null; obstacleCm: number | null; sentAt: number | null };
+  /** Raw `C:` reply line, untouched, for dev options. */
+  capsRaw: string | null;
 }
 
 export const EMPTY_LIVE: LiveCar = {
@@ -26,6 +30,8 @@ export const EMPTY_LIVE: LiveCar = {
   capabilities: null,
   stats: null,
   driving: false,
+  fw: { liftStop: null, obstacleCm: null, sentAt: null },
+  capsRaw: null,
 };
 
 interface LiveState {
@@ -51,6 +57,14 @@ export const useLive = create<LiveState>()((set) => ({
     set({ locked });
   },
 }));
+
+/**
+ * Is this car blocked because it is lifted? Only when the user turned "Stop when lifted" on
+ * for that car; otherwise a lifted car stays drivable (firmware v2 default).
+ */
+export function liftBlocks(live: LiveCar, stopWhenLifted: boolean): boolean {
+  return stopWhenLifted && live.status === 'connected' && Boolean(live.telemetry?.lifted);
+}
 
 export function liveOf(state: { cars: Record<string, LiveCar> }, carId: string): LiveCar {
   return state.cars[carId] ?? EMPTY_LIVE;

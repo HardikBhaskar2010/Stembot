@@ -13,6 +13,8 @@ export default tseslint.config(
       'coverage',
       'playwright-report',
       'test-results',
+      // MakeCode firmware, flashed to the car separately; not app code.
+      'stembot_fw_*.ts',
       '.claude',
     ],
   },

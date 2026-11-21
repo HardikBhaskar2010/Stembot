@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
-import { clampSpeed } from '../protocol/commands';
+import { clampObstacle, clampSpeed } from '../protocol/commands';
 import { SPEED_DEFAULT } from '../protocol/constants';
 
 export const CAR_COLORS = [
@@ -32,6 +32,12 @@ export interface SavedCar {
   lastSeenAt: number | null;
   /** Timestamps of recent unexpected disconnects (for the power hint). */
   drops: number[];
+  /** Firmware v2 `i1`/`i0`. Off by default: a lifted car keeps driving. */
+  stopWhenLifted: boolean;
+  /** Firmware v2 `o<cm>`; 0 = off. */
+  obstacleCm: number;
+  /** Last capability reply from the car (persisted so per-car options can be hidden offline). */
+  caps: { version: string; hasUltrasonic: boolean; hasHorn: boolean } | null;
 }
 
 interface GarageState {
@@ -94,6 +100,9 @@ export const useGarage = create<GarageState>()(
           lastDistanceCm: null,
           lastSeenAt: null,
           drops: [],
+          stopWhenLifted: false,
+          obstacleCm: 0,
+          caps: null,
         };
         set((s) => ({ cars: [...s.cars, car] }));
         return car;
@@ -107,6 +116,8 @@ export const useGarage = create<GarageState>()(
                   ...patch,
                   name: patch.name !== undefined ? cleanName(patch.name) || c.name : c.name,
                   speed: patch.speed !== undefined ? clampSpeed(patch.speed) : c.speed,
+                  obstacleCm:
+                    patch.obstacleCm !== undefined ? clampObstacle(patch.obstacleCm) : c.obstacleCm,
                 }
               : c,
           ),
@@ -134,7 +145,7 @@ export const useGarage = create<GarageState>()(
       // Validate what comes back from storage: it may be edited or corrupted.
       merge: (persisted, current) => {
         const p = persisted as Partial<GarageState> | undefined;
-        const cars = Array.isArray(p?.cars) ? p.cars.filter(isSavedCar) : [];
+        const cars = Array.isArray(p?.cars) ? p.cars.filter(isSavedCar).map(withV2Defaults) : [];
         return {
           ...current,
           cars,
@@ -144,6 +155,30 @@ export const useGarage = create<GarageState>()(
     },
   ),
 );
+
+/** Cars saved before firmware v2 support lack the new fields: fill safe defaults. */
+function withV2Defaults(c: SavedCar): SavedCar {
+  const raw = c as Partial<SavedCar>;
+  const caps = raw.caps;
+  return {
+    ...c,
+    stopWhenLifted: typeof raw.stopWhenLifted === 'boolean' ? raw.stopWhenLifted : false,
+    obstacleCm: clampObstacle(typeof raw.obstacleCm === 'number' ? raw.obstacleCm : 0),
+    caps:
+      caps &&
+      typeof caps === 'object' &&
+      typeof caps.version === 'string' &&
+      typeof caps.hasUltrasonic === 'boolean' &&
+      typeof caps.hasHorn === 'boolean'
+        ? caps
+        : null,
+  };
+}
+
+/** Obstacle stop needs a distance sensor; hide it only when the car says it has none. */
+export function canUseObstacleStop(car: SavedCar): boolean {
+  return car.caps?.hasUltrasonic !== false;
+}
 
 function isSavedCar(x: unknown): x is SavedCar {
   if (!x || typeof x !== 'object') return false;

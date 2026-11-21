@@ -1353,3 +1353,36 @@
     gap: var(--s-2);
   }
 }
+
+/* Lifted but still drivable (Stop when lifted is off): calm, not an error. */
+.radar--lifted-drivable .radar__svg {
+  opacity: 0.6;
+}
+
+.radar__status--lifted-drivable svg {
+  color: var(--signal);
+}
+
+.fleet__state--lifted-drivable {
+  color: var(--signal);
+}
+
+.settings__cars {
+  display: grid;
+  gap: var(--s-4);
+}
+
+.settings__empty {
+  color: var(--ink-dim);
+  padding-left: var(--s-5);
+}
+
+.tune__note {
+  font-size: var(--fs-sm);
+  color: var(--ink-dim);
+  padding: var(--s-3) 0 var(--s-2);
+}
+
+.dev__fw {
+  margin-bottom: var(--s-5);
+}

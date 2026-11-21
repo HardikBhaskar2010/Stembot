@@ -28,7 +28,11 @@ export function Group() {
     [cars, live],
   );
   const targets = useMemo(
-    () => connected.filter((c) => c.inGroup && !live[c.id]?.telemetry?.lifted).map((c) => c.id),
+    // Per car: only a lifted car with "Stop when lifted" on drops out; the others keep driving.
+    () =>
+      connected
+        .filter((c) => c.inGroup && !(c.stopWhenLifted && live[c.id]?.telemetry?.lifted))
+        .map((c) => c.id),
     [connected, live],
   );
   const targetKey = targets.join(',');
@@ -112,7 +116,8 @@ function FleetRow({
   const lifted = status === 'connected' && Boolean(l?.telemetry?.lifted);
   const cm = l?.telemetry?.distanceCm ?? null;
   const d = cm !== null ? formatDistance(cm, units) : null;
-  const problem = status === 'lost' || status === 'failed' || lifted;
+  const liftStops = car.stopWhenLifted;
+  const problem = status === 'lost' || status === 'failed' || (lifted && liftStops);
   const id = `fleet-${car.id}`;
   return (
     <li
@@ -124,9 +129,13 @@ function FleetRow({
         <span className="fleet__name" id={id}>
           {car.name}
         </span>
-        <span className={`fleet__state fleet__state--${lifted ? 'lifted' : status}`}>
+        <span
+          className={`fleet__state fleet__state--${lifted ? (liftStops ? 'lifted' : 'lifted-drivable') : status}`}
+        >
           {lifted
-            ? t('radar.lifted')
+            ? liftStops
+              ? t('radar.lifted')
+              : t('radar.liftedDrivable')
             : status === 'connected'
               ? d
                 ? `${d.value} ${d.unit}`
@@ -176,6 +185,7 @@ function TunePanel({ cars }: { cars: SavedCar[] }) {
           </label>
         </div>
       ))}
+      <p className="tune__note">{t('group.reverseHint')}</p>
     </section>
   );
 }

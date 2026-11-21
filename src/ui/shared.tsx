@@ -35,7 +35,19 @@ export function StopAllButton({ giant = false, label }: { giant?: boolean; label
   );
 }
 
-export function StatusChip({ status, lifted }: { status: CarStatus; lifted?: boolean }) {
+/**
+ * Lifted is shown two ways: "Lifted: stopped" (caution) when the car's "Stop when lifted" is on,
+ * and a calm "Lifted (still drivable)" when it is off (firmware v2 default).
+ */
+export function StatusChip({
+  status,
+  lifted,
+  liftStops = false,
+}: {
+  status: CarStatus;
+  lifted?: boolean;
+  liftStops?: boolean;
+}) {
   const prev = useRef(status);
   const [flash, setFlash] = useState(false);
   useEffect(() => {
@@ -48,11 +60,16 @@ export function StatusChip({ status, lifted }: { status: CarStatus; lifted?: boo
     prev.current = status;
     return undefined;
   }, [status]);
-  const kind = lifted && status === 'connected' ? 'lifted' : status;
+  const kind =
+    lifted && status === 'connected' ? (liftStops ? 'lifted' : 'lifted-drivable') : status;
   return (
     <span className={`chip chip--${kind} ${flash ? 'chip--just-connected' : ''}`}>
       <span className="chip__dot" aria-hidden="true" />
-      {kind === 'lifted' ? t('status.lifted') : t(`status.${status}`)}
+      {kind === 'lifted'
+        ? t('status.liftedStopped')
+        : kind === 'lifted-drivable'
+          ? t('status.liftedDrivable')
+          : t(`status.${status}`)}
     </span>
   );
 }

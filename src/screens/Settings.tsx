@@ -12,10 +12,13 @@ import {
   type MotionLevel,
   type Units,
 } from '../store/settings';
+import { useGarage } from '../store/garage';
+import { LiftStopSwitch, ObstacleStopControl } from '../ui/CarOptions';
 import { Button, IconButton, Row, Segmented, Switch } from '../ui/primitives';
 
 export function Settings() {
   const s = useSettings();
+  const cars = useGarage((g) => g.cars);
   const toast = useNotify((n) => n.toast);
 
   return (
@@ -133,6 +136,21 @@ export function Settings() {
             control={<span className="row__value">{t('settings.languageValue')}</span>}
           />
         </div>
+
+        <h2 className="section-title">{t('settings.cars')}</h2>
+        {cars.length === 0 ? (
+          <p className="settings__empty">{t('settings.carsEmpty')}</p>
+        ) : (
+          <div className="settings__cars">
+            {cars.map((c) => (
+              <section key={c.id} className="car-options glass" aria-label={c.name}>
+                <h3 className="car-options__name">{c.name}</h3>
+                <LiftStopSwitch car={c} withHint />
+                <ObstacleStopControl car={c} />
+              </section>
+            ))}
+          </div>
+        )}
 
         <h2 className="section-title">{t('settings.advanced')}</h2>
         <div className="rows glass">

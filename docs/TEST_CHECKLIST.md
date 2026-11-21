@@ -15,21 +15,25 @@ Write down pass/fail and the phone/browser model for each line.
 7. [ ] Nudge forward / back: about 0.3 s of movement, then stop. Spin left / right: about 0.45 s.
 8. [ ] Slow / Normal / Turbo while holding: speed changes without stopping.
 9. [ ] **Lock controls**: driving does nothing, STOP still works; unlock needs a ~0.6 s press.
-10. [ ] Pick the car up while driving: wheels stop, app shows "Lifted: car stopped", drive controls do nothing. Put it down: driving works again.
+10. [ ] **Stop when lifted OFF (default)**: pick the car up while driving: wheels keep turning, app shows "Lifted (still drivable)". Release: wheels stop.
+10b. [ ] Turn **Stop when lifted ON** (car card or Settings → Cars): Dev options shows `i1`. Lift while driving: wheels stop, app shows "Lifted: stopped", driving does nothing. Put it down: driving works again.
+10c. [ ] With it ON, switch the car off and on, reconnect: Dev options shows `i1` again and lifting still stops it (firmware reset it; the app re-sent it).
+10d. [ ] Turn it OFF: the one-time warning appears once, never again.
+10e. [ ] Obstacle stop 30 cm (Board A only; hidden on Board B, which has no sensor): drive slowly at a box, it stops near 30 cm. Try a chair leg and a corner and note misses.
 11. [ ] Switch the car off while holding forward: app says "{name} lost connection" within ~2 s; Reconnect works after switching it on.
 12. [ ] Reload the page, tap **Connect** on the card: reconnects (on Chrome without `getDevices()` the chooser opens again — expected).
 13. [ ] Dev options → Console: send `?`. Car must not move. Dev options → Live data: telemetry rate about 6–7 /s.
 
 ## B. Reverse wheels and speed
 
-14. [ ] On a car wired backwards: turn on **Reverse wheels** in its settings → forward is forward, spin left is left.
+14. [ ] Board B already has firmware `FLIP = true`: keep the app's **Reverse wheels OFF** for it and check forward is forward. Turning Reverse wheels on should make it drive backwards (they cancel out).
 15. [ ] Car speed slider at 200 and at 1023: slow and fast respectively; nothing below 200 is sent (check Dev options → Commands).
 
 ## C. Two to four cars (group)
 
 16. [ ] Connect 2 cars → **Group drive** → hold forward: both move. Release: both stop.
 17. [ ] Untick one car: only the other moves.
-18. [ ] Lift car 1 while driving the group: car 1 stops and shows Lifted; car 2 keeps moving while held.
+18. [ ] Car 1 with Stop when lifted ON, car 2 OFF. Lift car 1 while driving the group: car 1 stops ("Lifted: stopped"), car 2 keeps moving. Lift car 2: it keeps driving ("Lifted (still drivable)"), car 1 unaffected.
 19. [ ] Switch car 2 off while driving: car 2 shown as lost; car 1 still drives and stops normally.
 20. [ ] Tune: different speeds per car reduce drift on a 2 m straight line. (They will still drift: no feedback between cars.)
 21. [ ] With 3–4 cars: Dev options → Live data per car shows avg write time and "Replaced" counts; release still stops all cars at once. Note any car that lags.

@@ -40,7 +40,7 @@ export const MOCK_CARS: MockCarProfile[] = [
     id: 'mock-pevit',
     name: `${NAME_PREFIX} [pevit]`,
     hasUltrasonic: false,
-    newFirmware: false,
+    newFirmware: true,
     latencyMs: 15,
   },
   {
@@ -69,6 +69,10 @@ interface SimState {
   timer: ReturnType<typeof setInterval> | null;
   connected: boolean;
   rxLog: string[];
+  /** Firmware v2 `i`: stop while lifted. Default off, resets on disconnect. */
+  liftStop: boolean;
+  /** Firmware v2 `o`: forward obstacle stop in cm, 0 = off. Resets on disconnect. */
+  obstacleCm: number;
 }
 
 const encoder = new TextEncoder();
@@ -149,7 +153,14 @@ export class MockTransport implements CarTransport {
     const sim = this.sims.get(deviceId);
     if (!sim) return;
     sim.lifted = lifted;
-    if (lifted) sim.motion = 'x';
+    // Firmware v2: a lifted car only stops when lift-stop (`i1`) is on.
+    if (lifted && sim.liftStop) sim.motion = 'x';
+  }
+
+  /** Test hook: firmware v2 settings as the fake car currently has them. */
+  firmwareStateOf(deviceId: string): { liftStop: boolean; obstacleCm: number } {
+    const sim = this.sims.get(deviceId);
+    return { liftStop: sim?.liftStop ?? false, obstacleCm: sim?.obstacleCm ?? 0 };
   }
 
   /** Dev/test hook: simulate the car dropping off (out of range, flat battery). */
@@ -183,6 +194,8 @@ export class MockTransport implements CarTransport {
         timer: null,
         connected: false,
         rxLog: [],
+        liftStop: false,
+        obstacleCm: 0,
       };
       this.sims.set(id, s);
     }
@@ -192,6 +205,8 @@ export class MockTransport implements CarTransport {
   private teardown(sim: SimState) {
     sim.connected = false;
     sim.motion = 'x'; // the car stops by itself on link loss
+    sim.liftStop = false; // firmware v2 settings reset on link loss
+    sim.obstacleCm = 0;
     if (sim.timer) clearInterval(sim.timer);
     sim.timer = null;
     sim.handlers = null;
@@ -206,13 +221,18 @@ export class MockTransport implements CarTransport {
       const arg = Number(line.slice(1));
       if (letter === 'x' || letter === ' ') sim.motion = 'x';
       else if (letter === 'w' || letter === 's' || letter === 'a' || letter === 'd') {
-        if (sim.lifted) continue; // lifted cars ignore drive letters
+        if (sim.lifted && sim.liftStop) continue; // lift-stop on: lifted cars ignore drive letters
         sim.motion = letter;
         if (Number.isFinite(arg) && arg > 0) sim.speed = arg;
         sim.lastDriveAt = performance.now();
       } else if (letter === 'q') sim.speed = Math.max(200, sim.speed - 100);
       else if (letter === 'e') sim.speed = Math.min(1023, sim.speed + 100);
-      else if (letter === '?' && profile.newFirmware) {
+      else if (letter === 'i' && profile.newFirmware) {
+        sim.liftStop = arg === 1;
+        if (sim.liftStop && sim.lifted) sim.motion = 'x';
+      } else if (letter === 'o' && profile.newFirmware) {
+        sim.obstacleCm = Number.isInteger(arg) && arg >= 10 && arg <= 100 ? arg : 0;
+      } else if (letter === '?' && profile.newFirmware) {
         this.send(sim, `C:2.0,${profile.hasUltrasonic ? 1 : 0},1\n`);
       }
     }
@@ -222,6 +242,14 @@ export class MockTransport implements CarTransport {
     if (!sim.connected) return;
     // Firmware watchdog: no drive letter for 250 ms -> stop.
     if (sim.motion !== 'x' && performance.now() - sim.lastDriveAt > CAR_WATCHDOG_MS)
+      sim.motion = 'x';
+    if (sim.lifted && sim.liftStop) sim.motion = 'x';
+    if (
+      sim.motion === 'w' &&
+      sim.obstacleCm > 0 &&
+      profile.hasUltrasonic &&
+      sim.distance < sim.obstacleCm
+    )
       sim.motion = 'x';
     const step = (sim.speed / 1023) * 6;
     if (sim.motion === 'w') sim.distance -= step;

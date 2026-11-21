@@ -122,7 +122,8 @@ A semicircular sonar fan drawn in SVG at the front of the car glyph. Range rings
 
 - ≥ 50 cm: `--signal`. 20 to 50 cm: `--caution`, label "Close". < 20 cm: `--danger`, label "Very close".
 - `cm = 0`: rings dim, label "No echo" (not "0 cm"). Cars with no working sensor never look like they're touching a wall.
-- Lifted: fan replaced by "Lifted: car stopped" with a wheels-up glyph; drive controls disabled for that car.
+- Lifted, "Stop when lifted" on: fan dimmed, "Lifted: stopped" with a wheels-up glyph; drive controls disabled for that car.
+- Lifted, "Stop when lifted" off (firmware v2 default): calm "Lifted (still drivable)" in signal colour, controls stay live. Not an error.
 - No data for > 1 s: "Waiting for data" and dimmed.
 
 The same echo arc appears small on each Garage card (last reading), which ties the home screen to the drive screen.
@@ -152,7 +153,10 @@ Voice: short, plain, kind. Say what happened, then what to do. Car names come fr
 | Connecting | Connecting to {name}… | — | Cancel |
 | Connect failed | Couldn't reach {name} | Make sure it's on and close by. If it keeps failing, check its batteries. | **Try again** |
 | Lost connection | {name} lost connection | It stopped by itself. Bring it closer, then reconnect. | **Reconnect** |
-| Lifted | Lifted: {name} stopped | Put it back on the floor to drive. | — |
+| Lifted, Stop when lifted on | Lifted: stopped | Put it back on the floor to drive. | — |
+| Lifted, Stop when lifted off | Lifted (still drivable) | The wheels keep turning while you drive. | — |
+| Stop when lifted turned off (once) | Stop when lifted is off | A lifted car keeps spinning its wheels while you drive. Keep fingers clear. | Got it |
+| Obstacle stop hint | Obstacle stop | Helps stop the car before it drives into something ahead. It can miss thin legs, corners and soft things. | — |
 | No echo | No echo | Nothing in range, or this car has no distance sensor. | — |
 | Power hint | Check batteries | {name} dropped {n} times. Weak batteries cause this. | — |
 | Group drift note | — | Cars can't see each other, so they drift apart over distance. Line them up again now and then. | — |

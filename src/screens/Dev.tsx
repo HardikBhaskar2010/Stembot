@@ -91,7 +91,12 @@ export function Dev() {
         id={`panel-${tab}`}
         aria-labelledby={`tab-${tab}`}
       >
-        {tab === 'live' && (selected ? <LivePanel carId={selected.id} /> : <Empty />)}
+        {tab === 'live' && (
+          <>
+            <FirmwareStateTable />
+            {selected ? <LivePanel carId={selected.id} /> : <Empty />}
+          </>
+        )}
         {tab === 'log' && <LogPanel />}
         {tab === 'console' && (selected ? <ConsolePanel carId={selected.id} /> : <Empty />)}
         {tab === 'device' && <DevicePanel key={selected?.id ?? 'none'} carId={selected?.id} />}
@@ -99,6 +104,49 @@ export function Dev() {
         {tab === 'mock' && <MockPanel />}
       </section>
     </main>
+  );
+}
+
+/** Firmware v2 settings the app last sent to each connected car, plus the raw `C:` reply. */
+function FirmwareStateTable() {
+  const cars = useGarage((s) => s.cars);
+  const live = useLive((s) => s.cars);
+  const connected = cars.filter((c) => live[c.id]?.status === 'connected');
+  if (connected.length === 0) return null;
+  return (
+    <table className="dev__table dev__fw">
+      <caption className="dev__h">{t('dev.fwTitle')}</caption>
+      <thead>
+        <tr>
+          <th scope="col">{t('dev.car')}</th>
+          <th scope="col">{t('dev.fwLift')}</th>
+          <th scope="col">{t('dev.fwObstacle')}</th>
+          <th scope="col">{t('dev.fwCaps')}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {connected.map((c) => {
+          const l = live[c.id];
+          const fw = l?.fw;
+          return (
+            <tr key={c.id}>
+              <th scope="row">{c.name}</th>
+              <td className="dev__mono">
+                {fw?.liftStop == null ? t('dev.fwNotSent') : fw.liftStop ? 'i1' : 'i0'}
+              </td>
+              <td className="dev__mono">
+                {fw?.obstacleCm == null
+                  ? t('dev.fwNotSent')
+                  : fw.obstacleCm > 0
+                    ? `o${fw.obstacleCm}`
+                    : t('dev.fwOff')}
+              </td>
+              <td className="dev__mono">{l?.capsRaw ?? t('dev.fwNoReply')}</td>
+            </tr>
+          );
+        })}
+      </tbody>
+    </table>
   );
 }
 
