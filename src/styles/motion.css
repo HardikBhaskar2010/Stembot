@@ -1,0 +1,242 @@
+/*
+ * Signature motion. Rules (from the find/improve/review-animations skills, Emil Kowalski):
+ * - animate only rare or state-changing moments; nothing keyboard-driven or hit 100x a day
+ * - transform / opacity (plus stroke-dashoffset on a few SVG paths); never scale(0)
+ * - entrances ease-out, on-screen movement ease-in-out, constant loops linear
+ * - Calm (Settings or OS reduce-motion) keeps fades, drops movement and loops
+ */
+
+/* ---------- Brand mark ---------- */
+.brand-mark {
+  display: block;
+  overflow: visible;
+}
+
+.brand-mark__arc {
+  opacity: var(--rest);
+}
+
+/* draw: first run / empty garage. Each arc opens from its centre outward, like a sonar wave.
+   pathLength=1: a dash of length L centred on 0.5 = dasharray "L 2", dashoffset L/2 - 0.5. */
+.brand-mark--draw .brand-mark__arc {
+  opacity: 0;
+  stroke-dasharray: 0 2;
+  stroke-dashoffset: -0.5;
+  animation: brand-draw 700ms var(--ease-out) forwards;
+}
+.brand-mark--draw .brand-mark__arc--0 {
+  animation-delay: 260ms;
+}
+.brand-mark--draw .brand-mark__arc--1 {
+  animation-delay: 360ms;
+}
+.brand-mark--draw .brand-mark__arc--2 {
+  animation-delay: 470ms;
+}
+.brand-mark--draw .brand-mark__car {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  animation: brand-car 420ms var(--ease-out) both;
+}
+.brand-mark--draw .brand-mark__eye {
+  animation: brand-eye 300ms ease 180ms both;
+}
+.brand-mark--draw .brand-mark__fan {
+  animation: brand-fade 600ms ease 520ms both;
+}
+
+@keyframes brand-draw {
+  0% {
+    opacity: 0;
+  }
+  12% {
+    opacity: var(--rest);
+  }
+  100% {
+    opacity: var(--rest);
+    stroke-dasharray: 1 2;
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes brand-car {
+  from {
+    opacity: 0;
+    transform: translateY(calc(var(--rise) * 2)) scale(var(--scale-from));
+  }
+}
+@keyframes brand-eye {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes brand-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+/* search: waiting for a car. Pings travel outward, constant loop = linear timing. */
+.brand-mark--search .brand-mark__arc {
+  animation: brand-ping 1.5s linear infinite;
+}
+.brand-mark--search .brand-mark__arc--1 {
+  animation-delay: 0.18s;
+}
+.brand-mark--search .brand-mark__arc--2 {
+  animation-delay: 0.36s;
+}
+.brand-mark--search .brand-mark__eye {
+  animation: brand-blink 1.5s linear infinite;
+}
+
+@keyframes brand-ping {
+  0%,
+  100% {
+    opacity: 0.14;
+  }
+  18% {
+    opacity: 1;
+  }
+  55% {
+    opacity: 0.14;
+  }
+}
+@keyframes brand-blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  10% {
+    opacity: 0.4;
+  }
+  20% {
+    opacity: 1;
+  }
+}
+
+/* ping: a car just connected. One outward pulse, then rest. */
+.brand-mark--ping .brand-mark__arc {
+  animation: brand-ping-once 700ms ease-out both;
+}
+.brand-mark--ping .brand-mark__arc--1 {
+  animation-delay: 90ms;
+}
+.brand-mark--ping .brand-mark__arc--2 {
+  animation-delay: 180ms;
+}
+@keyframes brand-ping-once {
+  0% {
+    opacity: var(--rest);
+  }
+  35% {
+    opacity: 1;
+  }
+  100% {
+    opacity: var(--rest);
+  }
+}
+
+/* ---------- Garage: first view of the session ---------- */
+.garage__grid--enter > * {
+  animation: card-in 320ms var(--ease-out) both;
+  animation-delay: var(--enter-delay, 0ms);
+}
+@keyframes card-in {
+  from {
+    opacity: 0;
+    transform: translateY(var(--rise)) scale(0.985);
+  }
+}
+
+.garage__empty .empty-art {
+  animation: brand-fade 500ms ease both;
+}
+
+/* ---------- Add car: steps cross-fade instead of teleporting ---------- */
+.add__panel {
+  transition:
+    opacity 240ms var(--ease-out),
+    transform 240ms var(--ease-out);
+}
+@starting-style {
+  .add__panel {
+    opacity: 0;
+    transform: translateY(var(--rise));
+  }
+}
+
+.steps__dot {
+  transform-origin: left center;
+  transition:
+    background-color var(--t-base) ease,
+    transform var(--t-base) var(--ease-out);
+}
+.steps__dot[aria-current='step'] {
+  transform: scaleX(1.35);
+}
+
+/* ---------- Radar readout: state changes cross-fade ---------- */
+.radar__status,
+.radar__value {
+  transition: opacity var(--t-base) ease;
+}
+@starting-style {
+  .radar__status,
+  .radar__value {
+    opacity: 0;
+  }
+}
+.radar__echo-line,
+.radar__echo-glow {
+  transition: stroke var(--t-base) ease;
+}
+
+/* ---------- Hold to unlock: fill shows progress; release snaps back faster ---------- */
+.lock-btn--locked::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: rgb(var(--caramel-rgb) / 0.38);
+  clip-path: inset(0 100% 0 0);
+  transition: clip-path var(--t-base) var(--ease-out);
+  pointer-events: none;
+}
+.lock-btn--holding::after {
+  clip-path: inset(0 0 0 0);
+  transition: clip-path 600ms linear;
+}
+
+/* ---------- Calm ---------- */
+:root[data-motion='calm'] .radar__sweep {
+  animation: none;
+  opacity: 0;
+}
+:root[data-motion='calm'] .brand-mark--draw .brand-mark__arc {
+  opacity: var(--rest);
+  stroke-dasharray: none;
+  stroke-dashoffset: 0;
+  animation: brand-fade 300ms ease both;
+}
+:root[data-motion='calm'] .brand-mark--search .brand-mark__arc {
+  animation: brand-breathe 2.4s ease-in-out infinite;
+}
+:root[data-motion='calm'] .brand-mark--search .brand-mark__eye,
+:root[data-motion='calm'] .brand-mark--ping .brand-mark__arc {
+  animation: none;
+}
+:root[data-motion='calm'] .chip--connecting .chip__dot {
+  animation-duration: 2s;
+}
+:root[data-motion='calm'] .chip--just-connected::after {
+  animation: brand-fade 400ms ease reverse both;
+}
+@keyframes brand-breathe {
+  0%,
+  100% {
+    opacity: var(--rest);
+  }
+  50% {
+    opacity: 0.2;
+  }
+}

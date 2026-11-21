@@ -18,10 +18,11 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "e2e": "playwright test",
-    "icons": "pwa-assets-generator --preset minimal-2023 public/logo.svg",
+    "icons": "pwa-assets-generator --preset minimal-2023 public/logo.svg && node scripts/icons.mjs",
     "cap:sync": "npm run build && cap sync",
     "cap:android": "npm run build && cap sync android && cap open android",
-    "cap:ios": "npm run build && cap sync ios && cap open ios"
+    "cap:ios": "npm run build && cap sync ios && cap open ios",
+    "icons:native": "capacitor-assets generate --android --ios --iconBackgroundColor \"#1A120E\" --iconBackgroundColorDark \"#1A120E\" --splashBackgroundColor \"#1A120E\" --splashBackgroundColorDark \"#1A120E\""
   },
   "dependencies": {
     "@capacitor-community/bluetooth-le": "8.4.0",
@@ -38,6 +39,7 @@
   },
   "devDependencies": {
     "@axe-core/playwright": "4.14.0",
+    "@capacitor/assets": "4.0.0",
     "@capacitor/cli": "8.6.2",
     "@eslint/js": "10.0.1",
     "@playwright/test": "1.65.1",
@@ -52,6 +54,7 @@
     "globals": "17.14.0",
     "jsdom": "31.0.1",
     "prettier": "3.10.1",
+    "sharp": "0.35.5",
     "typescript": "6.0.3",
     "typescript-eslint": "8.73.0",
     "vite": "8.3.8",

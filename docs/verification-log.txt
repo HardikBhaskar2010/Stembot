@@ -351,3 +351,205 @@ $ npm run e2e
   1 skipped
   31 passed (3.3m)
 exit code: 0
+
+######## Icon + motion + Vercel (2026-11-21T18:14:25Z) ########
+==================================================================
+$ npm run typecheck
+==================================================================
+> stembot-control@0.1.0 typecheck
+> tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.node.json
+exit code: 0
+==================================================================
+$ npm run lint
+==================================================================
+> stembot-control@0.1.0 lint
+> eslint . --max-warnings=0
+exit code: 0
+==================================================================
+$ npm run format:check
+==================================================================
+> stembot-control@0.1.0 format:check
+> prettier --check .
+Checking formatting...
+All matched files use Prettier code style!
+exit code: 0
+==================================================================
+$ npm test
+==================================================================
+> stembot-control@0.1.0 test
+> vitest run
+ RUN  v5.1.1 C:/Users/sneha/Music/stembot
+ Test Files  4 passed (4)
+      Tests  57 passed (57)
+   Start at  23:44:46
+   Duration  2.56s (environment 78%, import 8%, tests 6%, transform 5%, worker 2%)
+exit code: 0
+==================================================================
+$ npm run build
+==================================================================
+> stembot-control@0.1.0 typecheck
+> tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.node.json
+vite v8.3.8 building client environment for production...
+transforming...
+✓ 2201 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/manifest.webmanifest                                   0.55 kB
+dist/index.html                                             1.20 kB │ gzip:   0.58 kB
+dist/assets/chakra-petch-latin-700-normal-CnDBPjkL.woff2    9.90 kB
+dist/assets/chakra-petch-latin-500-normal-BR1ody1F.woff2    9.95 kB
+dist/assets/chakra-petch-latin-600-normal-DVQm9bgb.woff2    9.96 kB
+dist/assets/chakra-petch-latin-700-normal-D1s_c2du.woff    13.33 kB
+dist/assets/chakra-petch-latin-500-normal-CnUQnZ4D.woff    13.40 kB
+dist/assets/chakra-petch-latin-600-normal-DQKfcdKo.woff    13.43 kB
+dist/assets/index-BWuwrgbs.css                             38.40 kB │ gzip:   8.75 kB
+dist/assets/web-_38AjOiq.js                                 0.84 kB │ gzip:   0.40 kB
+dist/assets/web-D9JrhzQj.js                                 0.89 kB │ gzip:   0.45 kB
+dist/assets/virtual_pwa-register-_SqIPkqn.js                1.12 kB │ gzip:   0.59 kB
+dist/assets/workbox-window.prod.es5-Bd17z0YL.js             5.65 kB │ gzip:   2.20 kB
+dist/assets/web-BPlC7H_6.js                                 7.74 kB │ gzip:   2.29 kB
+dist/assets/esm-BWht8f0k.js                                 8.86 kB │ gzip:   2.51 kB
+dist/assets/index-R2pYks6V.js                             345.44 kB │ gzip: 107.16 kB
+✓ built in 1.15s
+PWA v2.0.0
+mode      generateSW
+precache  27 entries (605.30 KiB)
+files generated
+  dist/sw.js
+  dist/workbox-2fbc6a65.js
+exit code: 0
+==================================================================
+$ npm run e2e
+==================================================================
+  ok  5 [mobile] › e2e\smoke.spec.ts:143:3 › safety: every way out sends stop › joystick: drag up drives, letting go sends x (2.4s)
+  ok  6 [mobile] › e2e\smoke.spec.ts:158:3 › safety: every way out sends stop › window blur while driving sends x (2.7s)
+  ok  7 [mobile] › e2e\smoke.spec.ts:170:3 › safety: every way out sends stop › switching tabs (visibility hidden) sends x (2.2s)
+  ok  8 [mobile] › e2e\smoke.spec.ts:183:3 › safety: every way out sends stop › Space and the giant STOP stop the car (2.6s)
+  ok  9 [mobile] › e2e\smoke.spec.ts:199:3 › safety: every way out sends stop › Stop when lifted off (default): a lifted car shows a calm state and still drives (4.0s)
+  ok 10 [mobile] › e2e\smoke.spec.ts:215:3 › safety: every way out sends stop › Stop when lifted on: sends i1, a lifted car stops and refuses to drive (6.8s)
+  ok 11 [mobile] › e2e\smoke.spec.ts:248:3 › safety: every way out sends stop › losing the link stops, tells the user in plain words, and offers reconnect (4.6s)
+  ok 12 [mobile] › e2e\smoke.spec.ts:262:3 › safety: every way out sends stop › arrow keys inside the speed selector change speed, not direction (2.0s)
+  ok 13 [mobile] › e2e\smoke.spec.ts:275:3 › safety: every way out sends stop › lock controls blocks driving but never blocks STOP (2.5s)
+  ok 14 [mobile] › e2e\smoke.spec.ts:288:3 › group drive › one control drives every ticked car; one failing car never blocks the others (8.4s)
+  ok 15 [mobile] › e2e\smoke.spec.ts:347:3 › group drive › reverse wheels swaps w/s for that car only (4.1s)
+  -  16 [mobile] › e2e\smoke.spec.ts:362:1 › desktop: keyboard hint shows once, then stays dismissed
+  ok 17 [desktop] › e2e\smoke.spec.ts:5:3 › first run and screens › connect and drive from an empty garage, every main screen renders and passes axe (16.9s)
+  ok 18 [desktop] › e2e\smoke.spec.ts:73:3 › first run and screens › add-car problems: cancelled chooser, Bluetooth off, permission denied, already added (8.0s)
+  ok 19 [desktop] › e2e\smoke.spec.ts:110:3 › first run and screens › unsupported browser shows the alternative (353ms)
+  ok 20 [desktop] › e2e\smoke.spec.ts:130:3 › safety: every way out sends stop › keyboard: hold W drives with keep-alive, release sends x (2.7s)
+  ok 21 [desktop] › e2e\smoke.spec.ts:143:3 › safety: every way out sends stop › joystick: drag up drives, letting go sends x (2.5s)
+  ok 22 [desktop] › e2e\smoke.spec.ts:158:3 › safety: every way out sends stop › window blur while driving sends x (2.5s)
+  ok 23 [desktop] › e2e\smoke.spec.ts:170:3 › safety: every way out sends stop › switching tabs (visibility hidden) sends x (1.9s)
+  ok 24 [desktop] › e2e\smoke.spec.ts:183:3 › safety: every way out sends stop › Space and the giant STOP stop the car (2.5s)
+  ok 25 [desktop] › e2e\smoke.spec.ts:199:3 › safety: every way out sends stop › Stop when lifted off (default): a lifted car shows a calm state and still drives (3.1s)
+  ok 26 [desktop] › e2e\smoke.spec.ts:215:3 › safety: every way out sends stop › Stop when lifted on: sends i1, a lifted car stops and refuses to drive (5.2s)
+  ok 27 [desktop] › e2e\smoke.spec.ts:248:3 › safety: every way out sends stop › losing the link stops, tells the user in plain words, and offers reconnect (3.6s)
+  ok 28 [desktop] › e2e\smoke.spec.ts:262:3 › safety: every way out sends stop › arrow keys inside the speed selector change speed, not direction (1.9s)
+  ok 29 [desktop] › e2e\smoke.spec.ts:275:3 › safety: every way out sends stop › lock controls blocks driving but never blocks STOP (2.2s)
+  ok 30 [desktop] › e2e\smoke.spec.ts:288:3 › group drive › one control drives every ticked car; one failing car never blocks the others (7.6s)
+  ok 31 [desktop] › e2e\smoke.spec.ts:347:3 › group drive › reverse wheels swaps w/s for that car only (3.4s)
+  ok 32 [desktop] › e2e\smoke.spec.ts:362:1 › desktop: keyboard hint shows once, then stays dismissed (2.5s)
+  1 skipped
+  31 passed (2.5m)
+exit code: 0
+
+######## Opening animation (2026-11-21T18:20:25Z) ########
+==================================================================
+$ npm run typecheck
+==================================================================
+> stembot-control@0.1.0 typecheck
+> tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.node.json
+exit code: 0
+==================================================================
+$ npm run lint
+==================================================================
+> stembot-control@0.1.0 lint
+> eslint . --max-warnings=0
+exit code: 0
+==================================================================
+$ npm run format:check
+==================================================================
+> stembot-control@0.1.0 format:check
+> prettier --check .
+Checking formatting...
+All matched files use Prettier code style!
+exit code: 0
+==================================================================
+$ npm test
+==================================================================
+> stembot-control@0.1.0 test
+> vitest run
+ RUN  v5.1.1 C:/Users/sneha/Music/stembot
+ Test Files  4 passed (4)
+      Tests  57 passed (57)
+   Start at  23:50:52
+   Duration  3.53s (environment 85%, import 6%, tests 4%, transform 4%, worker 2%)
+exit code: 0
+==================================================================
+$ npm run build
+==================================================================
+> stembot-control@0.1.0 typecheck
+> tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.node.json
+vite v8.3.8 building client environment for production...
+transforming...
+✓ 2203 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/manifest.webmanifest                                   0.55 kB
+dist/index.html                                             4.58 kB │ gzip:   1.44 kB
+dist/assets/chakra-petch-latin-700-normal-CnDBPjkL.woff2    9.90 kB
+dist/assets/chakra-petch-latin-500-normal-BR1ody1F.woff2    9.95 kB
+dist/assets/chakra-petch-latin-600-normal-DVQm9bgb.woff2    9.96 kB
+dist/assets/chakra-petch-latin-700-normal-D1s_c2du.woff    13.33 kB
+dist/assets/chakra-petch-latin-500-normal-CnUQnZ4D.woff    13.40 kB
+dist/assets/chakra-petch-latin-600-normal-DQKfcdKo.woff    13.43 kB
+dist/assets/index-CYqFi00C.css                             41.73 kB │ gzip:   9.41 kB
+dist/assets/web-OjhNNrzQ.js                                 0.84 kB │ gzip:   0.40 kB
+dist/assets/web-CVTc3x4Z.js                                 0.89 kB │ gzip:   0.45 kB
+dist/assets/virtual_pwa-register-CkF8JWon.js                1.12 kB │ gzip:   0.59 kB
+dist/assets/workbox-window.prod.es5-Bd17z0YL.js             5.65 kB │ gzip:   2.20 kB
+dist/assets/web-Bo3XyReh.js                                 7.74 kB │ gzip:   2.29 kB
+dist/assets/esm-DnjbJb7r.js                                 8.86 kB │ gzip:   2.51 kB
+dist/assets/index-D6afmmG2.js                             346.02 kB │ gzip: 107.37 kB
+✓ built in 1.15s
+PWA v2.0.0
+mode      generateSW
+precache  27 entries (612.42 KiB)
+files generated
+  dist/sw.js
+  dist/workbox-2fbc6a65.js
+exit code: 0
+==================================================================
+$ npm run e2e
+==================================================================
+  ok  5 [mobile] › e2e\smoke.spec.ts:143:3 › safety: every way out sends stop › joystick: drag up drives, letting go sends x (4.1s)
+  ok  6 [mobile] › e2e\smoke.spec.ts:158:3 › safety: every way out sends stop › window blur while driving sends x (4.0s)
+  ok  7 [mobile] › e2e\smoke.spec.ts:170:3 › safety: every way out sends stop › switching tabs (visibility hidden) sends x (3.7s)
+  ok  8 [mobile] › e2e\smoke.spec.ts:183:3 › safety: every way out sends stop › Space and the giant STOP stop the car (5.0s)
+  ok  9 [mobile] › e2e\smoke.spec.ts:199:3 › safety: every way out sends stop › Stop when lifted off (default): a lifted car shows a calm state and still drives (5.5s)
+  ok 10 [mobile] › e2e\smoke.spec.ts:215:3 › safety: every way out sends stop › Stop when lifted on: sends i1, a lifted car stops and refuses to drive (8.7s)
+  ok 11 [mobile] › e2e\smoke.spec.ts:248:3 › safety: every way out sends stop › losing the link stops, tells the user in plain words, and offers reconnect (5.6s)
+  ok 12 [mobile] › e2e\smoke.spec.ts:262:3 › safety: every way out sends stop › arrow keys inside the speed selector change speed, not direction (3.2s)
+  ok 13 [mobile] › e2e\smoke.spec.ts:275:3 › safety: every way out sends stop › lock controls blocks driving but never blocks STOP (3.6s)
+  ok 14 [mobile] › e2e\smoke.spec.ts:288:3 › group drive › one control drives every ticked car; one failing car never blocks the others (9.2s)
+  ok 15 [mobile] › e2e\smoke.spec.ts:347:3 › group drive › reverse wheels swaps w/s for that car only (5.5s)
+  -  16 [mobile] › e2e\smoke.spec.ts:362:1 › desktop: keyboard hint shows once, then stays dismissed
+  ok 17 [desktop] › e2e\smoke.spec.ts:5:3 › first run and screens › connect and drive from an empty garage, every main screen renders and passes axe (17.8s)
+  ok 18 [desktop] › e2e\smoke.spec.ts:73:3 › first run and screens › add-car problems: cancelled chooser, Bluetooth off, permission denied, already added (10.0s)
+  ok 19 [desktop] › e2e\smoke.spec.ts:110:3 › first run and screens › unsupported browser shows the alternative (414ms)
+  ok 20 [desktop] › e2e\smoke.spec.ts:130:3 › safety: every way out sends stop › keyboard: hold W drives with keep-alive, release sends x (4.2s)
+  ok 21 [desktop] › e2e\smoke.spec.ts:143:3 › safety: every way out sends stop › joystick: drag up drives, letting go sends x (3.8s)
+  ok 22 [desktop] › e2e\smoke.spec.ts:158:3 › safety: every way out sends stop › window blur while driving sends x (4.0s)
+  ok 23 [desktop] › e2e\smoke.spec.ts:170:3 › safety: every way out sends stop › switching tabs (visibility hidden) sends x (3.5s)
+  ok 24 [desktop] › e2e\smoke.spec.ts:183:3 › safety: every way out sends stop › Space and the giant STOP stop the car (3.9s)
+  ok 25 [desktop] › e2e\smoke.spec.ts:199:3 › safety: every way out sends stop › Stop when lifted off (default): a lifted car shows a calm state and still drives (4.5s)
+  ok 26 [desktop] › e2e\smoke.spec.ts:215:3 › safety: every way out sends stop › Stop when lifted on: sends i1, a lifted car stops and refuses to drive (5.9s)
+  ok 27 [desktop] › e2e\smoke.spec.ts:248:3 › safety: every way out sends stop › losing the link stops, tells the user in plain words, and offers reconnect (5.6s)
+  ok 28 [desktop] › e2e\smoke.spec.ts:262:3 › safety: every way out sends stop › arrow keys inside the speed selector change speed, not direction (3.6s)
+  ok 29 [desktop] › e2e\smoke.spec.ts:275:3 › safety: every way out sends stop › lock controls blocks driving but never blocks STOP (3.6s)
+  ok 30 [desktop] › e2e\smoke.spec.ts:288:3 › group drive › one control drives every ticked car; one failing car never blocks the others (8.5s)
+  ok 31 [desktop] › e2e\smoke.spec.ts:347:3 › group drive › reverse wheels swaps w/s for that car only (4.7s)
+  ok 32 [desktop] › e2e\smoke.spec.ts:362:1 › desktop: keyboard hint shows once, then stays dismissed (3.7s)
+  1 skipped
+  31 passed (3.4m)
+exit code: 0

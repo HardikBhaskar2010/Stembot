@@ -130,13 +130,30 @@ The same echo arc appears small on each Garage card (last reading), which ties t
 
 ## 7. Motion rules
 
-- State transitions 160 ms, `cubic-bezier(.2,.8,.2,1)` (exponential-ish ease-out). Screen change 180 ms fade + 8 px rise.
-- Radar sweep: 2.4 s linear loop, transform-only (GPU). Echo arc eases to new distance over 120 ms.
-- Press feedback: scale .96 in 60 ms on drive controls and STOP; haptic tick on mobile.
-- Connected chip: one 600 ms glow when a car connects, not a loop.
-- No page-load choreography, no decorative loops except the radar sweep.
-- `prefers-reduced-motion: reduce` or Settings → Motion "Calm": sweep stops (static fan), no rises, no glow; state still changes instantly.
-- Budget: only `transform`/`opacity` animate continuously; 60 fps on a mid Android phone is the bar.
+Revised Nov 22, 2026 with the `find-animation-opportunities`, `improve-animations` and `review-animations` skills (Emil Kowalski's guidance) and `svg-animation`. Motion lives in `src/styles/motion.css` (signature moments), `src/styles/splash.css` (opening) and the tokens in `tokens.css`.
+
+**Gate.** Every animation must name its purpose (feedback, state, spatial, preventing a jarring change, or delight on rare moments) and fit its frequency. Anything keyboard-driven or hit many times a minute does not animate: the command palette opens instantly on desktop, the distance readout never moves for style.
+
+**Tokens.** `--ease-out: cubic-bezier(0.23, 1, 0.32, 1)` (enter/exit), `--ease-in-out: cubic-bezier(0.77, 0, 0.175, 1)` (moving on screen: segmented lens), `--ease-drawer: cubic-bezier(0.32, 0.72, 0, 1)` (phone sheets), `--ease-spring: cubic-bezier(0.34, 1.36, 0.64, 1)` (joystick return, ~spring bounce 0.2). Durations: press 160 ms (STOP 100 ms), base 200 ms, modal 240 ms, drawer and toast 400 ms. Movement amounts `--rise` 8 px, `--scale-from` 0.96; never `scale(0)`.
+
+| Moment | Motion | Why |
+|---|---|---|
+| Opening (every launch) | Painted from `index.html` before JS: tile settles, sonar arcs open from their centres, wordmark rises; ~1.25 s, then the mark lifts and dissolves into the app on the same ground. Hairline loader only if loading passes 1.4 s | Brand moment that also covers load; never holds the app longer than the opening |
+| Empty garage (first run) | Logo draws on: car settles, arcs open centre-out, staggered 100 ms | Rare, delight budget |
+| Picking a car | Sonar pings travel outward, 1.5 s linear loop | State: "searching" |
+| Car connected | One outward ping on the mark; one ring leaves the status chip | State change, occasional |
+| Garage cards | 320 ms rise + fade, non-uniform stagger (70·√i ms), first garage view per session only | Group entrance, never blocks input |
+| Add-car steps | Cross-fade + 8 px rise, 240 ms; step dot widens | Prevents teleporting content |
+| Toasts | Transitions (interruptible): enter 400 ms from the bottom edge, leave 200 ms by the same edge | Spatial consistency |
+| Dialogs / sheets | Desktop modal: fade + scale from 0.96, 240 ms. Phone: drawer from the bottom, 400 ms drawer curve | Occasional |
+| Hold to unlock | Clip-path fill, 600 ms linear while held; snaps back 200 ms on release | Feedback; asymmetric timing |
+| Joystick | Tracks the finger 1:1 while dragging; springs back to centre 320 ms on release | Gesture physics |
+| Press | `scale(.97)` 160 ms everywhere; STOP `scale(.96)` 100 ms | Feedback |
+| Radar | Sweep 2.4 s linear (signature); echo arc 120 ms; readout states cross-fade | Live data indicator |
+
+**Calm.** Settings → Motion "Calm" or the OS reduced-motion switch sets `data-motion="calm"`: movement amounts go to zero, springs lose their overshoot, loops stop (sweep hidden, sonar search becomes a slow breathe), the opening becomes a short fade. Fades stay, so state changes are still legible.
+
+**Budget.** Only `transform`, `opacity`, `clip-path` and stroke-dash on three small SVG paths animate. 60 fps on a mid Android phone is the bar (not yet measured on a device).
 
 ## 8. Empty, loading and error states (copy)
 

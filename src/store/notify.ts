@@ -8,7 +8,11 @@ export interface Toast {
   title: string;
   body?: string;
   action?: { label: string; run: () => void };
+  /** Playing its exit transition; removed after LEAVE_MS. */
+  leaving?: boolean;
 }
+
+const LEAVE_MS = 200;
 
 interface NotifyState {
   toasts: Toast[];
@@ -34,7 +38,10 @@ export const useNotify = create<NotifyState>()((set, get) => ({
     if (ttlMs > 0) setTimeout(() => get().dismiss(id), ttlMs);
   },
   dismiss(id) {
-    set((s) => ({ toasts: s.toasts.filter((t) => t.id !== id) }));
+    const target = get().toasts.find((t) => t.id === id);
+    if (!target || target.leaving) return;
+    set((s) => ({ toasts: s.toasts.map((t) => (t.id === id ? { ...t, leaving: true } : t)) }));
+    setTimeout(() => set((s) => ({ toasts: s.toasts.filter((t) => t.id !== id) })), LEAVE_MS);
   },
   announce(text, assertive = false) {
     // Clear first so the same message is announced again.

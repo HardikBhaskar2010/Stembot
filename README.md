@@ -63,6 +63,15 @@ npm run cap:ios
 
 Then pick your team under Signing & Capabilities and run on a real iPhone (Bluetooth does not work in the simulator). `Info.plist` already has `NSBluetoothAlwaysUsageDescription`. Deployment target iOS 15.
 
+## Icons and motion
+
+- App icon: `public/logo.svg` and every PNG come from `scripts/icons.mjs` (`npm run icons`); native Android/iOS icons and splash screens: `npm run icons:native` (uses `@capacitor/assets`).
+- Motion rules, tokens and the opening animation are documented in [docs/DESIGN.md](docs/DESIGN.md) section 7.
+
+## Deploy (Vercel)
+
+`vercel.json` sets the build (`npm run build`, output `dist/`), security headers, `no-cache` for the service worker and long-term caching for hashed assets. Pushes to `main` deploy to production once the GitHub repo is linked to a Vercel project.
+
 ## Checks
 
 ```powershell

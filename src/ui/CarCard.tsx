@@ -11,7 +11,7 @@ import { formatDistance, MiniEcho } from './Radar';
 import { LiftStopSwitch } from './CarOptions';
 import { StatusChip, useNow } from './shared';
 
-export function CarCard({ car }: { car: SavedCar }) {
+export function CarCard({ car, enterDelay }: { car: SavedCar; enterDelay?: string }) {
   const live = useLive((s) => liveOf(s, car.id));
   const units = useSettings((s) => s.units);
   const editCar = useUi((s) => s.editCar);
@@ -26,7 +26,10 @@ export function CarCard({ car }: { car: SavedCar }) {
   return (
     <article
       className="car-card glass"
-      style={{ ['--tag' as string]: colorValue(car.color) }}
+      style={{
+        ['--tag' as string]: colorValue(car.color),
+        ['--enter-delay' as string]: enterDelay,
+      }}
       aria-label={car.name}
     >
       <header className="car-card__head">

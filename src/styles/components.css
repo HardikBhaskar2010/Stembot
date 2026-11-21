@@ -83,7 +83,8 @@
     inset 0 1px 0 rgb(255 255 255 / 0.28),
     inset 0 -2px 0 rgb(0 0 0 / 0.25),
     0 16px 40px -14px rgb(200 32 47 / 0.6);
-  transition: transform 60ms var(--ease-out);
+  /* STOP: the fastest feedback in the app. */
+  transition: transform 100ms var(--ease-out);
   user-select: none;
 }
 
@@ -147,16 +148,29 @@
   }
 }
 
-.chip--just-connected {
-  animation: glow 600ms var(--ease-out);
+/* Connected: one ring leaves the chip (transform + opacity only). */
+.chip {
+  position: relative;
 }
 
-@keyframes glow {
+.chip--just-connected::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: 0 0 0 2px rgb(95 227 161 / 0.7);
+  animation: chip-ring 600ms var(--ease-out) both;
+  pointer-events: none;
+}
+
+@keyframes chip-ring {
   from {
-    box-shadow: 0 0 0 0 rgb(95 227 161 / 0.6);
+    opacity: 1;
+    transform: scale(1);
   }
   to {
-    box-shadow: 0 0 0 10px rgb(95 227 161 / 0);
+    opacity: 0;
+    transform: scale(1.35, 1.8);
   }
 }
 
@@ -231,7 +245,7 @@
   width: calc((100% - 10px) / var(--n));
   border-radius: var(--r-control);
   transform: translateX(calc(100% * var(--i)));
-  transition: transform var(--t-lens) var(--ease-out);
+  transition: transform var(--t-lens) var(--ease-in-out);
   pointer-events: none;
 }
 
@@ -432,7 +446,25 @@
   gap: var(--s-3);
   padding: var(--s-3) var(--s-3) var(--s-3) var(--s-5);
   border-radius: 24px;
-  animation: toast-in var(--t-screen) var(--ease-out);
+  /* Interruptible: transitions (not keyframes), enter and leave by the bottom edge. */
+  transition:
+    opacity var(--t-toast) ease,
+    transform var(--t-toast) ease;
+}
+
+@starting-style {
+  .toast {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+}
+
+.toast--leaving {
+  opacity: 0;
+  transform: translateY(100%);
+  transition-duration: var(--t-base);
+  transition-timing-function: var(--ease-out);
+  pointer-events: none;
 }
 
 .toast__text {
@@ -459,13 +491,6 @@
   color: var(--caution);
 }
 
-@keyframes toast-in {
-  from {
-    opacity: 0;
-    transform: translateY(12px) scale(0.98);
-  }
-}
-
 /* ---------- Overlays: sheet / palette ---------- */
 .scrim {
   position: fixed;
@@ -475,11 +500,11 @@
   display: grid;
   place-items: start center;
   padding: 12vh var(--gutter) var(--gutter);
-  animation: fade-in var(--t-base) var(--ease-out);
+  transition: opacity var(--t-base) ease;
 }
 
-@keyframes fade-in {
-  from {
+@starting-style {
+  .scrim {
     opacity: 0;
   }
 }
@@ -492,13 +517,24 @@
   border-radius: var(--r-sheet);
   padding: var(--s-5);
   gap: var(--s-4);
-  animation: sheet-in var(--t-screen) var(--ease-out);
+  /* Modal: centred, fades up from a slightly smaller scale (never from 0). */
+  transition:
+    opacity var(--t-modal) var(--ease-out),
+    transform var(--t-modal) var(--ease-out);
 }
 
-@keyframes sheet-in {
-  from {
+@starting-style {
+  .sheet {
     opacity: 0;
-    transform: translateY(-8px) scale(0.98);
+    transform: scale(var(--scale-from));
+  }
+}
+
+/* The command palette is keyboard-driven (Ctrl/Cmd+K): it must appear instantly on desktop. */
+@media (min-width: 641px) {
+  .scrim:has(.palette),
+  .sheet.palette {
+    transition: none;
   }
 }
 
@@ -512,12 +548,21 @@
     max-height: 84dvh;
     border-radius: var(--r-sheet) var(--r-sheet) 0 0;
     padding-bottom: calc(env(safe-area-inset-bottom) + var(--s-5));
-    animation-name: sheet-up;
+    /* Phones: a drawer from the bottom edge (iOS-like curve). */
+    transition: transform var(--t-drawer) var(--ease-drawer);
   }
-  @keyframes sheet-up {
-    from {
-      transform: translateY(24px);
+  @starting-style {
+    .sheet {
+      transform: translateY(100%);
+    }
+  }
+  :root[data-motion='calm'] .sheet {
+    transition: opacity var(--t-drawer) ease;
+  }
+  @starting-style {
+    :root[data-motion='calm'] .sheet {
       opacity: 0;
+      transform: none;
     }
   }
 }

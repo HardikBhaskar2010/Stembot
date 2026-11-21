@@ -28,6 +28,7 @@ import {
   type DeviceInfo,
   type TransportErrorCode,
 } from '../transport';
+import { BrandMark } from '../ui/BrandMark';
 import { Button, IconButton } from '../ui/primitives';
 
 type Problem = TransportErrorCode | 'insecure' | 'already';
@@ -138,7 +139,7 @@ export function AddCar() {
 
         {step.name === 'picking' && (
           <StepPanel
-            icon={<span className="scan" aria-hidden="true" />}
+            icon={<BrandMark size={56} tile={false} motion="search" />}
             title={t('add.step2Title')}
             body={t('add.step2Body')}
           >
@@ -150,7 +151,7 @@ export function AddCar() {
 
         {step.name === 'connecting' && (
           <StepPanel
-            icon={<span className="scan" aria-hidden="true" />}
+            icon={<BrandMark size={56} tile={false} motion="search" />}
             title={t('add.step2Title')}
             body=""
           >
@@ -198,6 +199,7 @@ function NameStep({ car }: { car: SavedCar }) {
 
   return (
     <section className="add__panel add__name">
+      <BrandMark size={72} motion="ping" className="add__connected" />
       <h2>{t('add.step3Title')}</h2>
       <label className="field">
         <span className="field__label">{t('add.nameLabel')}</span>

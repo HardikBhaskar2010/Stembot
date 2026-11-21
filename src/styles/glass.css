@@ -42,7 +42,7 @@
 /* Interactive glass (SwiftUI .interactive()): a highlight follows the pointer, a press squashes. */
 .glass-i {
   transition:
-    transform var(--t-fast) var(--ease-out),
+    transform var(--t-press) var(--ease-out),
     background-color var(--t-base) var(--ease-out);
 }
 

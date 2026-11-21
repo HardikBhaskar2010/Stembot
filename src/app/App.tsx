@@ -43,8 +43,18 @@ export function App() {
 
   useEffect(() => {
     document.documentElement.dataset.glass = glass;
-    document.documentElement.dataset.motion = motion;
-  }, [glass, motion]);
+  }, [glass]);
+
+  // Motion: "calm" when chosen in Settings or when the OS asks for reduced motion.
+  useEffect(() => {
+    const mq = matchMedia('(prefers-reduced-motion: reduce)');
+    const apply = () => {
+      document.documentElement.dataset.motion = motion === 'calm' || mq.matches ? 'calm' : 'full';
+    };
+    apply();
+    mq.addEventListener('change', apply);
+    return () => mq.removeEventListener('change', apply);
+  }, [motion]);
 
   // Command palette: Ctrl/Cmd + K anywhere.
   useEffect(() => {

@@ -20,6 +20,7 @@ export function Joystick({ onHold, onRelease, disabled }: DriveInput) {
   const base = useRef<HTMLDivElement>(null);
   const [knob, setKnob] = useState({ x: 0, y: 0 });
   const [dir, setDir] = useState<Direction | null>(null);
+  const [dragging, setDragging] = useState(false);
   const active = useRef<number | null>(null);
   const current = useRef<Direction | null>(null);
   const releaseRef = useRef(onRelease);
@@ -66,6 +67,7 @@ export function Joystick({ onHold, onRelease, disabled }: DriveInput) {
     if (active.current === null) return;
     active.current = null;
     current.current = null;
+    setDragging(false);
     setKnob({ x: 0, y: 0 });
     setDir(null);
     onRelease();
@@ -80,11 +82,12 @@ export function Joystick({ onHold, onRelease, disabled }: DriveInput) {
     >
       <div
         ref={base}
-        className={`joystick glass ${dir ? `joystick--${dir}` : ''} ${disabled ? 'joystick--disabled' : ''}`}
+        className={`joystick glass ${dir ? `joystick--${dir}` : ''} ${dragging ? 'joystick--active' : ''} ${disabled ? 'joystick--disabled' : ''}`}
         aria-hidden="true"
         onPointerDown={(e) => {
           if (disabled || active.current !== null) return;
           active.current = e.pointerId;
+          setDragging(true);
           e.currentTarget.setPointerCapture(e.pointerId);
           update(e);
         }}

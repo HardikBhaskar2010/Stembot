@@ -10,8 +10,89 @@
     <link rel="icon" href="/logo.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="/apple-touch-icon-180x180.png" />
     <title>STEMBOT Control</title>
+    <link rel="stylesheet" href="/src/styles/splash.css" />
   </head>
   <body>
+    <!-- Opening animation: painted before the app bundle loads; removed by src/splash.ts.
+         Geometry matches the app icon (scripts/icons.mjs). -->
+    <div id="splash" class="splash" aria-hidden="true">
+      <div class="splash__stack">
+        <svg class="splash__mark" viewBox="0 0 512 512" focusable="false">
+          <defs>
+            <linearGradient id="sp-bg" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#3A2418" />
+              <stop offset="1" stop-color="#1A120E" />
+            </linearGradient>
+            <radialGradient id="sp-glow" cx="50%" cy="70%" r="55%">
+              <stop offset="0" stop-color="#A88462" stop-opacity=".42" />
+              <stop offset="1" stop-color="#A88462" stop-opacity="0" />
+            </radialGradient>
+            <linearGradient id="sp-body" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#F4ECE1" />
+              <stop offset="1" stop-color="#C9B59B" />
+            </linearGradient>
+          </defs>
+          <rect width="512" height="512" rx="116" fill="url(#sp-bg)" />
+          <rect width="512" height="512" rx="116" fill="url(#sp-glow)" />
+          <rect
+            x="1.5"
+            y="1.5"
+            width="509"
+            height="509"
+            rx="114.5"
+            fill="none"
+            stroke="#fff"
+            stroke-opacity=".08"
+            stroke-width="3"
+          />
+          <g transform="translate(256 256) scale(1.08) translate(-256 -256)">
+            <g fill="none" stroke="#3EE6FF" stroke-width="22" stroke-linecap="round">
+              <path
+                class="splash__arc splash__arc--0"
+                pathLength="1"
+                d="M209.2 228.0A70 70 0 0 1 302.8 228.0"
+              />
+              <path
+                class="splash__arc splash__arc--1"
+                pathLength="1"
+                d="M175.7 190.8A120 120 0 0 1 336.3 190.8"
+              />
+              <path
+                class="splash__arc splash__arc--2"
+                pathLength="1"
+                d="M142.2 153.7A170 170 0 0 1 369.8 153.7"
+              />
+            </g>
+            <g class="splash__car">
+              <rect x="160" y="318" width="34" height="76" rx="14" fill="#1A120E" />
+              <rect x="318" y="318" width="34" height="76" rx="14" fill="#1A120E" />
+              <rect x="186" y="262" width="140" height="156" rx="44" fill="url(#sp-body)" />
+              <rect
+                x="186"
+                y="262"
+                width="140"
+                height="156"
+                rx="44"
+                fill="none"
+                stroke="#fff"
+                stroke-opacity=".5"
+                stroke-width="2"
+              />
+              <circle cx="230" cy="294" r="18" fill="#1A120E" />
+              <circle cx="282" cy="294" r="18" fill="#1A120E" />
+              <circle class="splash__eye" cx="230" cy="294" r="8" fill="#3EE6FF" />
+              <circle class="splash__eye" cx="282" cy="294" r="8" fill="#3EE6FF" />
+              <rect x="226" y="372" width="60" height="10" rx="5" fill="#1A120E" opacity=".18" />
+            </g>
+          </g>
+        </svg>
+        <div class="splash__word">
+          <span class="splash__name">STEMBOT</span>
+          <span class="splash__sub">CONTROL</span>
+        </div>
+        <div class="splash__load"></div>
+      </div>
+    </div>
     <div id="root"></div>
     <noscript>STEMBOT Control needs JavaScript to talk to your car.</noscript>
     <script type="module" src="/src/main.tsx"></script>

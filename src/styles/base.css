@@ -130,29 +130,11 @@ a {
   animation: screen-in var(--t-screen) var(--ease-out);
 }
 
+/* Navigation happens tens of times a day: keep it near-imperceptible. */
 @keyframes screen-in {
   from {
     opacity: 0;
-    transform: translateY(8px);
-  }
-}
-
-:root[data-motion='calm'] *,
-:root[data-motion='calm'] *::before,
-:root[data-motion='calm'] *::after {
-  animation-duration: 0.001ms !important;
-  animation-iteration-count: 1 !important;
-  transition-duration: 0.001ms !important;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.001ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.001ms !important;
-    scroll-behavior: auto !important;
+    transform: translateY(calc(var(--rise) / 2));
   }
 }
 

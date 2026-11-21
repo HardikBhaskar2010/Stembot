@@ -75,18 +75,27 @@ export function StatusChip({
 }
 
 /** Lock never blocks STOP. Unlocking needs a 600 ms press so a stray tap can't do it. */
+/**
+ * Lock never blocks STOP. Unlocking needs a 600 ms press so a stray tap can't do it.
+ * The fill (CSS clip-path, 600 ms linear) shows the hold; releasing snaps it back in 200 ms.
+ */
 export function LockButton() {
   const locked = useLive((s) => s.locked);
-  const [progress, setProgress] = useState(0);
-  const timer = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [holding, setHolding] = useState(false);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const cancel = () => {
-    if (timer.current) clearInterval(timer.current);
+    if (timer.current) clearTimeout(timer.current);
     timer.current = null;
-    setProgress(0);
+    setHolding(false);
   };
 
-  useEffect(() => cancel, []);
+  useEffect(
+    () => () => {
+      if (timer.current) clearTimeout(timer.current);
+    },
+    [],
+  );
 
   if (!locked) {
     return (
@@ -105,24 +114,20 @@ export function LockButton() {
   }
 
   const start = () => {
-    cancel();
-    const t0 = performance.now();
-    timer.current = setInterval(() => {
-      const p = Math.min(1, (performance.now() - t0) / 600);
-      setProgress(p);
-      if (p >= 1) {
-        cancel();
-        haptic('press');
-        setLocked(false);
-      }
-    }, 30);
+    if (timer.current) clearTimeout(timer.current);
+    setHolding(true);
+    timer.current = setTimeout(() => {
+      timer.current = null;
+      setHolding(false);
+      haptic('press');
+      setLocked(false);
+    }, 600);
   };
 
   return (
     <button
       type="button"
-      className="btn glass glass--caramel glass-i lock-btn lock-btn--locked"
-      style={{ ['--p' as string]: progress }}
+      className={`btn glass glass--caramel glass-i lock-btn lock-btn--locked ${holding ? 'lock-btn--holding' : ''}`}
       onPointerDown={start}
       onPointerUp={cancel}
       onPointerLeave={cancel}
@@ -131,12 +136,12 @@ export function LockButton() {
         if (e.key === 'Enter' && !e.repeat) start();
       }}
       onKeyUp={cancel}
+      onBlur={cancel}
       onContextMenu={(e) => e.preventDefault()}
       aria-label={t('commands.unlock')}
     >
       <LockOpen size={18} aria-hidden="true" />
-      {t('commands.unlock')}
-      <span className="lock-btn__progress" aria-hidden="true" />
+      <span className="lock-btn__label">{t('commands.unlock')}</span>
     </button>
   );
 }
@@ -147,7 +152,10 @@ export function Toasts() {
   return (
     <div className="toasts">
       {toasts.map((toast) => (
-        <div key={toast.id} className={`toast glass toast--${toast.tone}`}>
+        <div
+          key={toast.id}
+          className={`toast glass toast--${toast.tone} ${toast.leaving ? 'toast--leaving' : ''}`}
+        >
           <div className="toast__text">
             <div className="toast__title">{toast.title}</div>
             {toast.body && <div className="toast__body">{toast.body}</div>}
