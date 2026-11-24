@@ -94,5 +94,6 @@ On the cars, v2.1/v2.2 showed a sad face, a long beep and **070** at boot. CODAL
 
 v2.3 therefore:
 - `USE_MIC = 0`: the microphone is never started (`input.setSoundThreshold` / `input.onSound` are not called). `k` is ignored. The `C:` reply gains a 5th field, hasMic (`C:2.3,1,1,1,0`), and the app hides Clap commands for cars that report 0.
-- `USE_SOUND = 1`: sounds stay on. **If 070 still appears, set `USE_SOUND = 0`** (no tones at all, honk reported as unavailable) and reflash.
+- `USE_SOUND = 0` (changed Nov 25 2026): with sound on, Car A still crashed with a loud beep every time it connected (OBSERVED from both the phone app and the Raspberry Pi), so the cars are now silent. The `C:` reply reports hasHorn 0 (`C:2.3,1,0,1,0`), and the app hides honk and car sounds. `pins.setAudioPinEnabled(false)` still runs, so audio can never reach the P0 wheel pin.
+- Pairing: a project left on MakeCode's default "JustWorks pairing" only advertises to devices it has paired with. To pair a new device (such as the Pi), hold A+B, press and release reset, keep holding until the pairing pattern shows, then pair from that device.
 - Build with the current MakeCode editor (makecode.microbit.org); an old project may be pinned to an older editor/runtime.

@@ -1,7 +1,8 @@
 // STEMBOT firmware v2.3, Bluetooth UART. Newest command wins.
 // v2.3: microphone OFF (USE_MIC = 0) after panic 070 on boot. 070 = Bluetooth radio firmware
 // assert; the micro:bit runtime's audio code can disable interrupts while Bluetooth advertises
-// (CODAL issue #506). If 070 still appears, set USE_SOUND = 0 as well.
+// (CODAL issue #506). Sound is now OFF too (USE_SOUND = 0): on Nov 25 2026 the connect tune
+// crashed the car (070) every time it connected, so the car is silent and honk is unavailable.
 // BOARD: Board A (first car, normal wheel direction)
 // Right: P8 fwd / P0 back. Left: P16 fwd / P15 back.
 // Ultrasonic: TRIG P1, ECHO P2. Bottom IR: left P14, right P13 (reads 1 = no floor).
@@ -38,7 +39,7 @@ pins.digitalWritePin(DigitalPin.P16, 0)
 // ---- per-board settings -------------------------------------------------
 const FLIP: boolean = false      // true = reverse both wheels (wheels wired the other way)
 const HAS_ULTRASONIC: number = 1 // 1 if this car has a working ultrasonic sensor, else 0
-const USE_SOUND: number = 1      // 1 = car sounds and honk; 0 = silent (if panic 070 persists)
+const USE_SOUND: number = 0      // 0 = silent (sound + Bluetooth crashes with 070); 1 = car sounds and honk
 const USE_MIC: number = 0        // 1 = clap commands (microphone); 0 = microphone never started
 const HAS_HORN: number = USE_SOUND // honk needs sound
 const HAS_COMPASS: number = 1    // micro:bit V2 has a compass (magnetometer)
@@ -388,8 +389,9 @@ function startClapMove(n: number) {
 stopAll()
 // Sound goes to the built-in speaker only, never to an edge-connector pin:
 // P0 is a wheel pin and P1/P2 are the ultrasonic pins (pins.setAudioPinEnabled, V2 only).
+// Done even when silent, so audio can never reach the P0 wheel pin.
+pins.setAudioPinEnabled(false)
 if (USE_SOUND) {
-    pins.setAudioPinEnabled(false)
     music.setBuiltInSpeakerEnabled(true)
     music.setVolume(150)
 }
